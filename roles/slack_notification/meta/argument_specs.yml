@@ -1,0 +1,82 @@
+---
+argument_specs:
+  main:
+    short_description: Send Slack notifications for automation events
+    description:
+      - Sends formatted Slack notifications to configured channel
+      - Supports success, failure, warning, and info notification types
+      - Includes job context, error messages, and links to logs
+    author: Ansible Automation
+
+    options:
+      slack_webhook_url:
+        description: Slack webhook URL (from AAP credential input source)
+        type: str
+        required: true
+
+      notification_type:
+        description: Type of notification
+        type: str
+        choices: ['success', 'failure', 'warning', 'info']
+        default: 'info'
+
+      job_name:
+        description: Name of the job/playbook that triggered notification
+        type: str
+        required: true
+
+      job_status:
+        description: Status of the job
+        type: str
+        default: 'unknown'
+
+      job_url:
+        description: URL to job execution logs
+        type: str
+        required: false
+
+      job_id:
+        description: Job ID or run ID
+        type: str
+        required: false
+
+      error_message:
+        description: Error message or failure reason
+        type: str
+        required: false
+
+      extra_info:
+        description: Additional context as key-value pairs
+        type: dict
+        required: false
+
+      slack_channel:
+        description: Slack channel to post to
+        type: str
+        default: '#aap-demo-notifications'
+
+  send:
+    short_description: Send notification to Slack
+    description:
+      - Public function to send a Slack notification
+
+    options:
+      notification_type:
+        description: Type of notification
+        type: str
+        required: true
+
+      job_name:
+        description: Job name
+        type: str
+        required: true
+
+      job_status:
+        description: Job status
+        type: str
+        required: false
+
+      error_message:
+        description: Error message
+        type: str
+        required: false

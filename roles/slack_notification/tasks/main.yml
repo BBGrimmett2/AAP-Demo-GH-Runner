@@ -1,0 +1,12 @@
+---
+# Main orchestration for slack_notification role
+
+- name: Validate notification parameters
+  ansible.builtin.import_tasks: validate.yml
+  tags:
+    - always
+
+- name: Send Slack notification
+  ansible.builtin.import_tasks: send.yml
+  tags:
+    - notify

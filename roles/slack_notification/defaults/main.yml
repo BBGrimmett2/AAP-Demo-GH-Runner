@@ -1,0 +1,33 @@
+---
+# Slack notification configuration
+# Slack webhook URL should come from AAP credential input source
+slack_webhook_url: "{{ lookup('env', 'SLACK_WEBHOOK_URL') | default('') }}"
+
+# Notification defaults
+slack_channel: "#aap-demo-notifications"  # Override if needed
+slack_username: "AAP Demo Bot"
+slack_icon_emoji: ":robot_face:"
+
+# Notification type: success, failure, warning, info
+notification_type: "info"
+
+# Job information (should be provided by caller)
+job_name: "Ansible Job"
+job_status: "unknown"
+job_url: ""
+job_id: ""
+
+# Additional context
+error_message: ""
+extra_info: {}
+
+# Color mapping for notification types
+slack_colors:
+  success: "good"      # Green
+  failure: "danger"    # Red
+  warning: "warning"   # Yellow
+  info: "#439FE0"      # Blue
+
+# Message formatting
+slack_include_timestamp: true
+slack_include_footer: true

@@ -1,0 +1,85 @@
+---
+# Public function: Send Slack notification
+
+- name: Build notification title
+  ansible.builtin.set_fact:
+    _notification_title: "{{ notification_type | upper }}: {{ job_name }}"
+
+- name: Build notification emoji
+  ansible.builtin.set_fact:
+    _notification_emoji: >-
+      {{
+        ':white_check_mark:' if notification_type == 'success' else
+        ':x:' if notification_type == 'failure' else
+        ':warning:' if notification_type == 'warning' else
+        ':information_source:'
+      }}
+
+- name: Build notification fields
+  ansible.builtin.set_fact:
+    _notification_fields:
+      - title: "Status"
+        value: "{{ job_status | default('N/A') }}"
+        short: true
+      - title: "Job ID"
+        value: "{{ job_id | default('N/A') }}"
+        short: true
+
+- name: Add error message field if provided
+  ansible.builtin.set_fact:
+    _notification_fields: "{{ _notification_fields + [{'title': 'Error Message', 'value': error_message, 'short': false}] }}"
+  when:
+    - error_message is defined
+    - error_message | length > 0
+
+- name: Add extra info fields
+  ansible.builtin.set_fact:
+    _notification_fields: "{{ _notification_fields + [{'title': item.key, 'value': item.value, 'short': true}] }}"
+  loop: "{{ extra_info | dict2items }}"
+  when:
+    - extra_info is defined
+    - extra_info | length > 0
+
+- name: Add job URL as action button if provided
+  ansible.builtin.set_fact:
+    _notification_actions:
+      - type: "button"
+        text: "View Job Logs"
+        url: "{{ job_url }}"
+  when:
+    - job_url is defined
+    - job_url | length > 0
+
+- name: Build Slack message payload
+  ansible.builtin.set_fact:
+    _slack_payload:
+      channel: "{{ slack_channel }}"
+      username: "{{ slack_username }}"
+      icon_emoji: "{{ slack_icon_emoji }}"
+      attachments:
+        - color: "{{ slack_colors[notification_type] }}"
+          title: "{{ _notification_emoji }} {{ _notification_title }}"
+          fields: "{{ _notification_fields }}"
+          footer: "{{ 'AAP Demo Automation' if slack_include_footer else omit }}"
+          ts: "{{ ansible_date_time.epoch if slack_include_timestamp else omit }}"
+          actions: "{{ _notification_actions | default(omit) }}"
+
+- name: Send notification to Slack
+  ansible.builtin.uri:
+    url: "{{ slack_webhook_url }}"
+    method: POST
+    body_format: json
+    body: "{{ _slack_payload }}"
+    status_code: 200
+    timeout: 10
+  register: slack_response
+  no_log: true
+  failed_when: false
+
+- name: Check Slack API response
+  ansible.builtin.assert:
+    that:
+      - slack_response.status == 200
+    fail_msg: "Failed to send Slack notification: {{ slack_response.msg | default('Unknown error') }}"
+    success_msg: "Slack notification sent successfully"
+  when: slack_response is defined
