@@ -1,0 +1,38 @@
+---
+# Setup Podman Desktop on GitHub Actions runners
+# This playbook installs and configures Podman Desktop with Red Hat registry authentication
+
+- name: Setup Podman Desktop on Runners
+  hosts: github_runners
+  gather_facts: true
+
+  pre_tasks:
+    - name: Display target hosts
+      ansible.builtin.debug:
+        msg: "Setting up Podman Desktop on {{ inventory_hostname }} ({{ ansible_os_family }})"
+
+  tasks:
+    - name: Install Podman Desktop
+      ansible.builtin.import_role:
+        name: podman_desktop
+        tasks_from: install
+      tags:
+        - install
+
+    - name: Configure Podman Desktop
+      ansible.builtin.import_role:
+        name: podman_desktop
+        tasks_from: configure
+      tags:
+        - configure
+
+  post_tasks:
+    - name: Verify Podman installation
+      ansible.builtin.command:
+        cmd: podman version
+      register: podman_version
+      changed_when: false
+
+    - name: Display Podman version
+      ansible.builtin.debug:
+        msg: "Podman Desktop successfully installed. Podman version: {{ podman_version.stdout_lines[0] }}"

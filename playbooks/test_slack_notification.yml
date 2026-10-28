@@ -1,0 +1,38 @@
+---
+# Test Slack Notification
+# This playbook tests the Slack notification system
+
+- name: Test Slack Notifications
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    # Override these when testing
+    test_notification_type: "{{ notification_type | default('info') }}"
+    test_job_name: "{{ job_name | default('Test Slack Notification') }}"
+    test_error_message: "{{ error_message | default('') }}"
+
+  tasks:
+    - name: Display test information
+      ansible.builtin.debug:
+        msg: "Testing {{ test_notification_type }} notification for job: {{ test_job_name }}"
+
+    - name: Send test notification
+      ansible.builtin.import_role:
+        name: slack_notification
+        tasks_from: send
+      vars:
+        notification_type: "{{ test_notification_type }}"
+        job_name: "{{ test_job_name }}"
+        job_status: "{{ 'failed' if test_notification_type == 'failure' else 'completed' }}"
+        job_id: "test-{{ ansible_date_time.epoch }}"
+        job_url: "https://controller.example.com/jobs/test-{{ ansible_date_time.epoch }}"
+        error_message: "{{ test_error_message }}"
+        extra_info:
+          test_run: "true"
+          timestamp: "{{ ansible_date_time.iso8601 }}"
+          triggered_by: "{{ ansible_user_id }}"
+
+    - name: Display completion message
+      ansible.builtin.debug:
+        msg: "Test notification sent successfully! Check your Slack channel: {{ slack_channel | default('#aap-demo-notifications') }}"

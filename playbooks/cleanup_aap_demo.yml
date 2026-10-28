@@ -1,0 +1,30 @@
+---
+# Cleanup AAP Demo
+# This playbook removes AAP Demo deployments
+
+- name: Cleanup AAP Demo
+  hosts: "{{ target_host | default('github_runners') }}"
+  gather_facts: false
+
+  pre_tasks:
+    - name: Display cleanup target
+      ansible.builtin.debug:
+        msg: "Cleaning up AAP Demo on {{ inventory_hostname }}"
+
+  tasks:
+    - name: Clean up AAP Demo deployment
+      ansible.builtin.import_role:
+        name: aap_demo
+        tasks_from: cleanup
+
+  post_tasks:
+    - name: Display cleanup completion
+      ansible.builtin.debug:
+        msg: "AAP Demo cleanup completed on {{ inventory_hostname }}"
+
+    - name: Set cleanup result for AAP
+      ansible.builtin.set_stats:
+        data:
+          aap_demo_cleaned: true
+          cleanup_host: "{{ inventory_hostname }}"
+          cleanup_time: "{{ ansible_date_time.iso8601 }}"

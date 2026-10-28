@@ -1,0 +1,96 @@
+---
+# Check GitHub Runner Health with Slack Notifications
+# Scheduled health check with failure notifications
+
+- name: Check GitHub Runner Health
+  hosts: github_runners
+  gather_facts: true
+
+  vars:
+    job_context:
+      job_name: "Scheduled Runner Health Check"
+      job_id: "{{ awx_job_id | default(tower_job_id) | default('manual') }}"
+      job_url: "{{ awx_job_template_url | default(tower_job_template_url) | default('') }}"
+
+  tasks:
+    - name: Run health checks
+      block:
+        - name: Health check GitHub Actions runner
+          ansible.builtin.import_role:
+            name: github_runner
+            tasks_from: health_check
+          register: health_check_result
+
+        - name: Set health check success flag
+          ansible.builtin.set_fact:
+            health_check_succeeded: true
+            healthy_runners: "{{ healthy_runners | default([]) + [inventory_hostname] }}"
+
+      rescue:
+        - name: Set health check failure flag
+          ansible.builtin.set_fact:
+            health_check_succeeded: false
+            unhealthy_runners: "{{ unhealthy_runners | default([]) + [inventory_hostname] }}"
+            health_error: "{{ ansible_failed_result.msg | default('Health check failed') }}"
+
+        - name: Send Slack failure notification for unhealthy runner
+          ansible.builtin.import_role:
+            name: slack_notification
+            tasks_from: send
+          vars:
+            notification_type: "failure"
+            job_name: "{{ job_context.job_name }}"
+            job_status: "unhealthy"
+            job_id: "{{ job_context.job_id }}"
+            job_url: "{{ job_context.job_url }}"
+            error_message: "Runner {{ inventory_hostname }} failed health check"
+            extra_info:
+              runner: "{{ inventory_hostname }}"
+              platform: "{{ ansible_os_family }}"
+              error: "{{ health_error }}"
+          delegate_to: localhost
+
+  post_tasks:
+    - name: Aggregate health check results
+      ansible.builtin.set_fact:
+        total_runners: "{{ groups['github_runners'] | length }}"
+        healthy_count: "{{ healthy_runners | default([]) | length }}"
+        unhealthy_count: "{{ unhealthy_runners | default([]) | length }}"
+      delegate_to: localhost
+      run_once: true
+
+    - name: Send summary notification if all healthy
+      ansible.builtin.import_role:
+        name: slack_notification
+        tasks_from: send
+      vars:
+        notification_type: "success"
+        job_name: "{{ job_context.job_name }}"
+        job_status: "all runners healthy"
+        job_id: "{{ job_context.job_id }}"
+        job_url: "{{ job_context.job_url }}"
+        extra_info:
+          total_runners: "{{ total_runners }}"
+          healthy_runners: "{{ healthy_count }}"
+      delegate_to: localhost
+      run_once: true
+      when: unhealthy_count | int == 0
+
+    - name: Send warning notification if some unhealthy
+      ansible.builtin.import_role:
+        name: slack_notification
+        tasks_from: send
+      vars:
+        notification_type: "warning"
+        job_name: "{{ job_context.job_name }}"
+        job_status: "some runners unhealthy"
+        job_id: "{{ job_context.job_id }}"
+        job_url: "{{ job_context.job_url }}"
+        error_message: "{{ unhealthy_count }} runner(s) failed health check: {{ unhealthy_runners | default([]) | join(', ') }}"
+        extra_info:
+          total_runners: "{{ total_runners }}"
+          healthy_runners: "{{ healthy_count }}"
+          unhealthy_runners: "{{ unhealthy_count }}"
+      delegate_to: localhost
+      run_once: true
+      when: unhealthy_count | int > 0

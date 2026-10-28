@@ -1,0 +1,64 @@
+---
+# Setup GitHub Actions Runners with Dynamic Token Generation
+# This playbook generates runner registration tokens via GitHub API
+
+- name: Generate GitHub Runner Registration Token
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    # GitHub PAT should come from AAP credential input source
+    github_pat: "{{ lookup('env', 'GITHUB_PAT') | default('') }}"
+    github_runner_url: "{{ github_runner_url | default('https://github.com/RedHatOfficial/aap-demo') }}"
+
+  tasks:
+    - name: Generate runner registration token
+      ansible.builtin.import_role:
+        name: github_runner
+        tasks_from: generate_token
+      vars:
+        github_pat: "{{ github_pat }}"
+        github_runner_url: "{{ github_runner_url }}"
+
+    - name: Display token status
+      ansible.builtin.debug:
+        msg: "Token generated and will expire at {{ github_runner_token_expires_at }}"
+
+- name: Setup GitHub Actions Runners
+  hosts: github_runners
+  gather_facts: true
+
+  vars:
+    # Token from previous play
+    github_runner_token: "{{ hostvars['localhost']['github_runner_token'] }}"
+
+  tasks:
+    - name: Display runner setup information
+      ansible.builtin.debug:
+        msg: "Setting up GitHub Actions runner on {{ inventory_hostname }} ({{ ansible_os_family }})"
+
+    - name: Install GitHub Actions runner
+      ansible.builtin.import_role:
+        name: github_runner
+        tasks_from: install
+      tags:
+        - install
+
+    - name: Configure GitHub Actions runner with dynamic token
+      ansible.builtin.import_role:
+        name: github_runner
+        tasks_from: configure
+      tags:
+        - configure
+
+    - name: Setup runner service
+      ansible.builtin.import_role:
+        name: github_runner
+        tasks_from: service
+      tags:
+        - service
+
+  post_tasks:
+    - name: Display completion message
+      ansible.builtin.debug:
+        msg: "GitHub Actions runner '{{ github_runner_name }}' has been successfully set up on {{ inventory_hostname }}"

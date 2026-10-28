@@ -1,0 +1,38 @@
+---
+# Check GitHub Runner Health
+# This playbook verifies runner health and connectivity (scheduled maintenance)
+
+- name: Check GitHub Runner Health
+  hosts: github_runners
+  gather_facts: true
+
+  pre_tasks:
+    - name: Display health check target
+      ansible.builtin.debug:
+        msg: "Checking health of GitHub Actions runner on {{ inventory_hostname }}"
+
+  tasks:
+    - name: Health check GitHub Actions runner
+      ansible.builtin.import_role:
+        name: github_runner
+        tasks_from: health_check
+      register: health_check_result
+
+  post_tasks:
+    - name: Report healthy runner
+      ansible.builtin.debug:
+        msg: "Runner {{ github_runner_name }} on {{ inventory_hostname }} is healthy"
+      when: github_runner_healthy is defined and github_runner_healthy
+
+    - name: Set health status for AAP
+      ansible.builtin.set_stats:
+        data:
+          runner_healthy: "{{ github_runner_healthy | default(false) }}"
+          runner_name: "{{ github_runner_name }}"
+          runner_host: "{{ inventory_hostname }}"
+          check_time: "{{ ansible_date_time.iso8601 }}"
+
+    - name: Alert on unhealthy runner
+      ansible.builtin.fail:
+        msg: "Runner {{ github_runner_name }} on {{ inventory_hostname }} is unhealthy!"
+      when: not (github_runner_healthy | default(false))

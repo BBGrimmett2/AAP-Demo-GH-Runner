@@ -1,0 +1,43 @@
+---
+# Test AAP Demo
+# This playbook runs AAP Demo tests (deploy and/or status tests)
+
+- name: Test AAP Demo
+  hosts: "{{ target_host | default('github_runners') }}"
+  gather_facts: false
+
+  vars:
+    # Test type: deploy, status, or all (default)
+    test_type: "{{ test_type | default('all') }}"
+
+  pre_tasks:
+    - name: Display test information
+      ansible.builtin.debug:
+        msg: "Running AAP Demo {{ test_type }} test(s) on {{ inventory_hostname }}"
+
+  tasks:
+    - name: Run AAP Demo tests
+      ansible.builtin.import_role:
+        name: aap_demo
+        tasks_from: test
+      vars:
+        test_type: "{{ test_type }}"
+
+  post_tasks:
+    - name: Display test results
+      ansible.builtin.debug:
+        msg: "AAP Demo tests completed successfully on {{ inventory_hostname }}"
+      when: aap_demo_test_passed is defined and aap_demo_test_passed
+
+    - name: Set test results for AAP
+      ansible.builtin.set_stats:
+        data:
+          aap_demo_test_passed: "{{ aap_demo_test_passed | default(false) }}"
+          test_type: "{{ test_type }}"
+          test_host: "{{ inventory_hostname }}"
+          test_time: "{{ ansible_date_time.iso8601 }}"
+
+    - name: Fail if tests did not pass
+      ansible.builtin.fail:
+        msg: "AAP Demo tests failed on {{ inventory_hostname }}"
+      when: not (aap_demo_test_passed | default(false))

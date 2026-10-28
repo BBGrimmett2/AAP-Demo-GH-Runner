@@ -1,0 +1,32 @@
+---
+# Deploy AAP Demo
+# This playbook is called by AAP Job Templates to deploy AAP Demo on runner systems
+
+- name: Deploy AAP Demo
+  hosts: "{{ target_host | default('github_runners') }}"
+  gather_facts: false
+  serial: 1  # Deploy one runner at a time
+
+  pre_tasks:
+    - name: Display deployment target
+      ansible.builtin.debug:
+        msg: "Deploying AAP Demo on {{ inventory_hostname }}"
+
+  tasks:
+    - name: Deploy AAP Demo
+      ansible.builtin.import_role:
+        name: aap_demo
+        tasks_from: deploy
+
+  post_tasks:
+    - name: Display deployment status
+      ansible.builtin.debug:
+        msg: "AAP Demo deployment completed on {{ inventory_hostname }}"
+      when: aap_demo_deploy_result is defined and aap_demo_deploy_result.rc == 0
+
+    - name: Set deployment result for AAP
+      ansible.builtin.set_stats:
+        data:
+          aap_demo_deployed: true
+          deployment_host: "{{ inventory_hostname }}"
+          deployment_time: "{{ ansible_date_time.iso8601 }}"

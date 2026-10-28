@@ -1,0 +1,73 @@
+---
+# Deploy AAP Demo with Slack Notifications
+# This playbook wraps the deployment with failure notifications
+
+- name: Deploy AAP Demo
+  hosts: "{{ target_host | default('github_runners') }}"
+  gather_facts: false
+  serial: 1
+
+  vars:
+    job_context:
+      job_name: "Deploy AAP Demo"
+      job_id: "{{ awx_job_id | default(tower_job_id) | default('manual') }}"
+      job_url: "{{ awx_job_template_url | default(tower_job_template_url) | default('') }}"
+      runner_host: "{{ inventory_hostname }}"
+
+  tasks:
+    - name: Deploy AAP Demo
+      block:
+        - name: Run deployment
+          ansible.builtin.import_role:
+            name: aap_demo
+            tasks_from: deploy
+
+        - name: Set deployment success flag
+          ansible.builtin.set_fact:
+            deployment_succeeded: true
+
+      rescue:
+        - name: Set deployment failure flag
+          ansible.builtin.set_fact:
+            deployment_succeeded: false
+            deployment_error: "{{ ansible_failed_result.msg | default('Deployment failed') }}"
+
+        - name: Send Slack failure notification
+          ansible.builtin.import_role:
+            name: slack_notification
+            tasks_from: send
+          vars:
+            notification_type: "failure"
+            job_name: "{{ job_context.job_name }}"
+            job_status: "failed"
+            job_id: "{{ job_context.job_id }}"
+            job_url: "{{ job_context.job_url }}"
+            error_message: "{{ deployment_error }}"
+            extra_info:
+              runner: "{{ job_context.runner_host }}"
+              commit_sha: "{{ commit_sha | default('N/A') }}"
+              triggered_by: "{{ pusher | default('EDA webhook') }}"
+          delegate_to: localhost
+          run_once: true
+
+        - name: Fail the playbook
+          ansible.builtin.fail:
+            msg: "Deployment failed: {{ deployment_error }}"
+
+  post_tasks:
+    - name: Send Slack success notification
+      ansible.builtin.import_role:
+        name: slack_notification
+        tasks_from: send
+      vars:
+        notification_type: "success"
+        job_name: "{{ job_context.job_name }}"
+        job_status: "completed"
+        job_id: "{{ job_context.job_id }}"
+        job_url: "{{ job_context.job_url }}"
+        extra_info:
+          runner: "{{ job_context.runner_host }}"
+          commit_sha: "{{ commit_sha | default('N/A') }}"
+      delegate_to: localhost
+      run_once: true
+      when: deployment_succeeded | default(false)

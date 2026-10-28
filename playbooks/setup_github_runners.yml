@@ -1,0 +1,39 @@
+---
+# Setup GitHub Actions self-hosted runners
+# This playbook installs, configures, and starts GitHub Actions runners on RHEL and Windows hosts
+
+- name: Setup GitHub Actions Runners
+  hosts: github_runners
+  gather_facts: true
+
+  pre_tasks:
+    - name: Display target hosts
+      ansible.builtin.debug:
+        msg: "Setting up GitHub Actions runner on {{ inventory_hostname }} ({{ ansible_os_family }})"
+
+  tasks:
+    - name: Install GitHub Actions runner
+      ansible.builtin.import_role:
+        name: github_runner
+        tasks_from: install
+      tags:
+        - install
+
+    - name: Configure GitHub Actions runner
+      ansible.builtin.import_role:
+        name: github_runner
+        tasks_from: configure
+      tags:
+        - configure
+
+    - name: Setup runner service
+      ansible.builtin.import_role:
+        name: github_runner
+        tasks_from: service
+      tags:
+        - service
+
+  post_tasks:
+    - name: Display completion message
+      ansible.builtin.debug:
+        msg: "GitHub Actions runner '{{ github_runner_name }}' has been successfully set up on {{ inventory_hostname }}"
