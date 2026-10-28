@@ -1,0 +1,42 @@
+---
+# Common variables for all GitHub Actions runners
+
+# AAP Controller connection details (used by credential lookups)
+controller_hostname: "{{ lookup('env', 'CONTROLLER_HOST') | default('') }}"
+controller_username: "{{ lookup('env', 'CONTROLLER_USERNAME') | default('') }}"
+controller_password: "{{ lookup('env', 'CONTROLLER_PASSWORD') | default('') }}"
+controller_validate_certs: false
+
+# External secret manager credential lookups
+# These variables pull secrets from the external secret manager via AAP credential input sources
+# The actual lookup method depends on the secret manager in use (CyberArk, Vault, Azure Key Vault, etc.)
+
+# GitHub runner registration token
+# Provided via AAP credential input source - do not hardcode
+github_runner_token: "{{ lookup('env', 'GITHUB_RUNNER_TOKEN') | default('') }}"
+
+# Red Hat registry credentials for pulling execution environments
+# Provided via AAP credential input source - do not hardcode
+redhat_registry_username: "{{ lookup('env', 'REDHAT_REGISTRY_USERNAME') | default('') }}"
+redhat_registry_password: "{{ lookup('env', 'REDHAT_REGISTRY_PASSWORD') | default('') }}"
+
+# Slack webhook URL for notifications
+# Provided via AAP credential input source - do not hardcode
+slack_webhook_url: "{{ lookup('env', 'SLACK_WEBHOOK_URL') | default('') }}"
+slack_channel: "#aap-demo-notifications"
+
+# Runner configuration defaults
+github_runner_group: "Default"
+github_runner_replace_existing: false
+github_runner_ephemeral: false
+github_runner_disable_update: false
+
+# Podman Desktop configuration
+podman_machine_cpus: 2
+podman_machine_memory: 4096  # MB
+podman_machine_disk_size: 100  # GB
+
+# AAP Demo configuration
+aap_demo_repo_url: "https://github.com/RedHatOfficial/aap-demo.git"
+aap_demo_branch: "main"
+aap_demo_workdir: "/tmp/aap-demo"

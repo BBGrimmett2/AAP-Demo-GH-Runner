@@ -1,0 +1,26 @@
+---
+# Windows-specific variables for GitHub Actions runners
+
+# Runner installation directory
+github_runner_work_directory: "C:\\actions-runner"
+
+# Runner service account (SYSTEM for Windows Service)
+github_runner_user: SYSTEM
+github_runner_group_name: SYSTEM
+
+# Platform-specific labels (added to common labels from parent group)
+github_runner_labels: "{{ github_runner_labels | default([]) + ['self-hosted', 'windows', 'x64', 'windows-2025'] }}"
+
+# Podman Desktop installation method for Windows
+podman_desktop_install_method: msi
+podman_desktop_windows_installer_url: "https://github.com/containers/podman-desktop/releases/latest/download/podman-desktop-setup.exe"
+
+# WSL2 configuration
+podman_wsl_required: true
+podman_wsl_distro: "Ubuntu"
+
+# Podman configuration directory
+podman_config_dir: "{{ ansible_env.USERPROFILE }}\\.config\\containers"
+
+# AAP Demo working directory
+aap_demo_workdir: "C:\\Temp\\aap-demo"

@@ -1,0 +1,22 @@
+---
+# RHEL-specific variables for GitHub Actions runners
+
+# Runner installation directory
+github_runner_work_directory: /opt/actions-runner
+
+# Runner service account
+github_runner_user: runner
+github_runner_group_name: runner
+
+# Platform-specific labels (added to common labels from parent group)
+github_runner_labels: "{{ github_runner_labels | default([]) + ['self-hosted', 'linux', 'x64', 'rhel9'] }}"
+
+# Podman Desktop installation method for RHEL
+podman_desktop_install_method: flatpak
+podman_desktop_flatpak_id: "io.podman_desktop.PodmanDesktop"
+
+# Podman configuration directory
+podman_config_dir: "{{ ansible_env.HOME }}/.config/containers"
+
+# AAP Demo working directory
+aap_demo_workdir: "/tmp/aap-demo"
