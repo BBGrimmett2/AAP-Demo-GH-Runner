@@ -1,0 +1,67 @@
+---
+# Event-Driven Ansible Rulebook for GitHub Webhooks
+# Monitors RedHatOfficial/aap-demo repository for changes
+
+- name: Monitor AAP Demo Repository
+  hosts: all
+
+  sources:
+    - ansible.eda.webhook:
+        host: 0.0.0.0
+        port: 5000
+        # HMAC secret for webhook signature validation
+        # Set via environment variable in EDA Controller
+        token: "{{ WEBHOOK_SECRET | default('') }}"
+
+  rules:
+    # Rule: Detect push to main branch
+    - name: Deploy AAP Demo on Main Branch Push
+      condition: >
+        event.payload.ref == "refs/heads/main" and
+        event.payload.repository.full_name == "RedHatOfficial/aap-demo" and
+        event.payload.commits is defined and
+        event.payload.commits | length > 0
+      action:
+        run_job_template:
+          name: Deploy AAP Demo
+          organization: CI/CD
+          job_args:
+            extra_vars:
+              commit_sha: "{{ event.payload.after }}"
+              commit_message: "{{ event.payload.head_commit.message }}"
+              pusher: "{{ event.payload.pusher.name }}"
+              target_host: "github_runners_rhel"
+
+    # Rule: Detect pull request events
+    - name: Test AAP Demo on Pull Request
+      condition: >
+        event.payload.action in ["opened", "synchronize", "reopened"] and
+        event.payload.pull_request is defined and
+        event.payload.repository.full_name == "RedHatOfficial/aap-demo"
+      action:
+        run_job_template:
+          name: Test AAP Demo
+          organization: CI/CD
+          job_args:
+            extra_vars:
+              pr_number: "{{ event.payload.pull_request.number }}"
+              pr_title: "{{ event.payload.pull_request.title }}"
+              pr_branch: "{{ event.payload.pull_request.head.ref }}"
+              commit_sha: "{{ event.payload.pull_request.head.sha }}"
+              test_type: "all"
+              target_host: "github_runners_rhel"
+
+    # Rule: Detect pull request closed/merged - cleanup
+    - name: Cleanup AAP Demo on Pull Request Close
+      condition: >
+        event.payload.action == "closed" and
+        event.payload.pull_request is defined and
+        event.payload.repository.full_name == "RedHatOfficial/aap-demo"
+      action:
+        run_job_template:
+          name: Cleanup AAP Demo
+          organization: CI/CD
+          job_args:
+            extra_vars:
+              pr_number: "{{ event.payload.pull_request.number }}"
+              target_host: "github_runners"
