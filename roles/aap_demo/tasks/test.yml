@@ -1,0 +1,42 @@
+---
+# Public function: Run AAP Demo tests
+
+- name: Set test type
+  ansible.builtin.set_fact:
+    _test_type: "{{ test_type | default('all') }}"
+
+- name: Run AAP Demo deploy test
+  when: _test_type in ['deploy', 'all']
+  block:
+    - name: Test AAP Demo deployment
+      ansible.builtin.import_tasks: deploy.yml
+
+    - name: Wait for deployment to stabilize
+      ansible.builtin.pause:
+        seconds: "{{ aap_demo_health_check_delay }}"
+
+    - name: Verify deployment succeeded
+      ansible.builtin.assert:
+        that:
+          - aap_demo_deploy_result is defined
+          - aap_demo_deploy_result.rc == 0
+        fail_msg: "AAP Demo deployment test failed"
+        success_msg: "AAP Demo deployment test passed"
+
+- name: Run AAP Demo status test
+  when: _test_type in ['status', 'all']
+  block:
+    - name: Test AAP Demo status
+      ansible.builtin.import_tasks: status.yml
+
+    - name: Verify status check succeeded
+      ansible.builtin.assert:
+        that:
+          - aap_demo_status_result is defined
+          - aap_demo_status_result.rc in [0, 1]
+        fail_msg: "AAP Demo status test failed"
+        success_msg: "AAP Demo status test passed"
+
+- name: Set overall test result
+  ansible.builtin.set_fact:
+    aap_demo_test_passed: true

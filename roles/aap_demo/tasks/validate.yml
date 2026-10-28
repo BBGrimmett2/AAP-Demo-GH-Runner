@@ -1,0 +1,29 @@
+---
+# Validation tasks for aap_demo role
+
+- name: Validate required tools are installed
+  ansible.builtin.command:
+    cmd: "{{ item }} --version"
+  loop:
+    - git
+    - podman
+  register: tool_check
+  changed_when: false
+  failed_when: tool_check.rc != 0
+
+- name: Validate AAP Demo repository URL
+  ansible.builtin.assert:
+    that:
+      - aap_demo_repo_url is defined
+      - aap_demo_repo_url | length > 0
+      - aap_demo_repo_url is match('^https://github\.com/')
+    fail_msg: "aap_demo_repo_url must be a valid GitHub repository URL"
+    success_msg: "AAP Demo repository URL is valid"
+
+- name: Validate working directory path
+  ansible.builtin.assert:
+    that:
+      - aap_demo_workdir is defined
+      - aap_demo_workdir | length > 0
+    fail_msg: "aap_demo_workdir must be defined"
+    success_msg: "Working directory is defined"

@@ -1,0 +1,8 @@
+---
+# Handlers for aap_demo role
+
+- name: Restart AAP Demo
+  ansible.builtin.command:
+    cmd: "{{ aap_demo_cli }} restart"
+    chdir: "{{ aap_demo_workdir }}"
+  changed_when: true

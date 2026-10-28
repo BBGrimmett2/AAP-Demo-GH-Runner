@@ -1,0 +1,32 @@
+---
+# Public function: Check AAP Demo status
+
+- name: Check if AAP Demo is deployed
+  ansible.builtin.stat:
+    path: "{{ aap_demo_workdir }}"
+  register: aap_demo_deployed
+
+- name: Assert AAP Demo is deployed
+  ansible.builtin.assert:
+    that:
+      - aap_demo_deployed.stat.exists
+      - aap_demo_deployed.stat.isdir
+    fail_msg: "AAP Demo is not deployed at {{ aap_demo_workdir }}"
+    success_msg: "AAP Demo deployment directory exists"
+
+- name: Get AAP Demo status
+  ansible.builtin.command:
+    cmd: "{{ aap_demo_cli }} status"
+    chdir: "{{ aap_demo_workdir }}"
+  register: aap_demo_status_result
+  changed_when: false
+  failed_when: aap_demo_status_result.rc not in [0, 1]
+  timeout: "{{ aap_demo_status_timeout }}"
+
+- name: Display AAP Demo status
+  ansible.builtin.debug:
+    var: aap_demo_status_result.stdout_lines
+
+- name: Set status result fact
+  ansible.builtin.set_fact:
+    aap_demo_status: "{{ 'running' if aap_demo_status_result.rc == 0 else 'stopped' }}"

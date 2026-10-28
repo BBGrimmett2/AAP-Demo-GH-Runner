@@ -1,0 +1,84 @@
+---
+argument_specs:
+  main:
+    short_description: Deploy and test AAP Demo application
+    description:
+      - Clones and deploys AAP Demo from GitHub
+      - Runs status and deployment tests
+      - Provides cleanup functionality
+    author: Ansible Automation
+
+    options:
+      aap_demo_repo_url:
+        description: AAP Demo repository URL
+        type: str
+        default: "https://github.com/RedHatOfficial/aap-demo.git"
+
+      aap_demo_branch:
+        description: Git branch to deploy
+        type: str
+        default: "main"
+
+      aap_demo_workdir:
+        description: Working directory for AAP Demo
+        type: str
+        default: "/tmp/aap-demo"
+
+      aap_demo_deploy_timeout:
+        description: Deployment timeout in seconds
+        type: int
+        default: 600
+
+  deploy:
+    short_description: Deploy AAP Demo
+    description:
+      - Clones AAP Demo repository
+      - Runs deployment process
+      - Waits for deployment to complete
+
+    options:
+      aap_demo_repo_url:
+        description: Repository URL
+        type: str
+        required: true
+
+      aap_demo_branch:
+        description: Branch to deploy
+        type: str
+        default: "main"
+
+  status:
+    short_description: Check AAP Demo status
+    description:
+      - Verifies AAP Demo deployment status
+      - Returns health status
+
+    options:
+      aap_demo_workdir:
+        description: AAP Demo directory
+        type: str
+        required: true
+
+  test:
+    short_description: Run AAP Demo tests
+    description:
+      - Executes AAP Demo test suite
+      - Supports deploy and status tests
+
+    options:
+      test_type:
+        description: Type of test to run (deploy, status, or all)
+        type: str
+        default: "all"
+
+  cleanup:
+    short_description: Clean up AAP Demo deployment
+    description:
+      - Stops AAP Demo services
+      - Removes deployment directory
+
+    options:
+      aap_demo_workdir:
+        description: AAP Demo directory to clean
+        type: str
+        required: true

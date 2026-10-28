@@ -1,0 +1,17 @@
+---
+# Main orchestration for aap_demo role
+
+- name: Validate role variables and prerequisites
+  ansible.builtin.import_tasks: validate.yml
+  tags:
+    - always
+
+- name: Deploy AAP Demo
+  ansible.builtin.import_tasks: deploy.yml
+  tags:
+    - deploy
+
+- name: Run AAP Demo tests
+  ansible.builtin.import_tasks: test.yml
+  tags:
+    - test
