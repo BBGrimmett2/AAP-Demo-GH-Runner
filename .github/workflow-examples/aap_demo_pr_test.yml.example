@@ -1,0 +1,114 @@
+name: AAP Demo PR Test
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  test-aap-demo:
+    name: Test AAP Demo on Self-Hosted Runners
+    runs-on: [self-hosted, aap-demo, linux]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Display runner information
+        run: |
+          echo "Runner: $RUNNER_NAME"
+          echo "OS: $RUNNER_OS"
+          echo "Architecture: $RUNNER_ARCH"
+          podman version
+          ansible --version
+
+      - name: Deploy AAP Demo
+        id: deploy
+        run: |
+          ansible-playbook playbooks/deploy_aap_demo.yml \
+            -i inventories/runners/hosts.yml \
+            -e "target_host=localhost"
+        env:
+          ANSIBLE_FORCE_COLOR: "true"
+        continue-on-error: true
+
+      - name: Test AAP Demo Status
+        id: test_status
+        if: steps.deploy.outcome == 'success'
+        run: |
+          ansible-playbook playbooks/test_aap_demo.yml \
+            -i inventories/runners/hosts.yml \
+            -e "target_host=localhost" \
+            -e "test_type=status"
+        env:
+          ANSIBLE_FORCE_COLOR: "true"
+        continue-on-error: true
+
+      - name: Test AAP Demo Deploy
+        id: test_deploy
+        if: steps.deploy.outcome == 'success'
+        run: |
+          ansible-playbook playbooks/test_aap_demo.yml \
+            -i inventories/runners/hosts.yml \
+            -e "target_host=localhost" \
+            -e "test_type=deploy"
+        env:
+          ANSIBLE_FORCE_COLOR: "true"
+        continue-on-error: true
+
+      - name: Comment PR with results
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          script: |
+            const deployResult = '${{ steps.deploy.outcome }}';
+            const statusResult = '${{ steps.test_status.outcome }}';
+            const deployTestResult = '${{ steps.test_deploy.outcome }}';
+
+            const statusIcon = (result) => {
+              if (result === 'success') return '[PASS]';
+              if (result === 'failure') return '[FAIL]';
+              return '[SKIP]';
+            };
+
+            const body = `## AAP Demo Test Results
+
+            **PR:** #${{ github.event.pull_request.number }}
+            **Commit:** \`${{ github.sha }}\`
+            **Runner:** \`${process.env.RUNNER_NAME || 'unknown'}\`
+
+            ### Test Results
+            - **Deployment:** ${statusIcon(deployResult)} ${deployResult}
+            - **Status Test:** ${statusIcon(statusResult)} ${statusResult}
+            - **Deploy Test:** ${statusIcon(deployTestResult)} ${deployTestResult}
+
+            ${deployResult === 'failure' || statusResult === 'failure' || deployTestResult === 'failure' ?
+              '**WARNING: Some tests failed.** Please review the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.' :
+              '**All tests passed!**'}
+
+            ---
+            *Automated test run by GitHub Actions self-hosted runner*
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+      - name: Cleanup AAP Demo
+        if: always()
+        run: |
+          ansible-playbook playbooks/cleanup_aap_demo.yml \
+            -i inventories/runners/hosts.yml \
+            -e "target_host=localhost"
+        env:
+          ANSIBLE_FORCE_COLOR: "true"
+        continue-on-error: true
+
+      - name: Final status check
+        if: steps.deploy.outcome == 'failure' || steps.test_status.outcome == 'failure' || steps.test_deploy.outcome == 'failure'
+        run: |
+          echo "One or more tests failed"
+          exit 1

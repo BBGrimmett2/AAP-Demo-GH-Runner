@@ -1,0 +1,119 @@
+name: AAP Demo Scheduled Test
+
+on:
+  schedule:
+    # Run every weekday at 6 AM UTC
+    - cron: '0 6 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  scheduled-test:
+    name: Scheduled AAP Demo Test
+    runs-on: [self-hosted, aap-demo, linux]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Display test information
+        run: |
+          echo "Scheduled test run"
+          echo "Runner: $RUNNER_NAME"
+          echo "Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+
+      - name: Deploy AAP Demo
+        id: deploy
+        run: |
+          ansible-playbook playbooks/deploy_aap_demo.yml \
+            -i inventories/runners/hosts.yml \
+            -e "target_host=localhost"
+        env:
+          ANSIBLE_FORCE_COLOR: "true"
+        continue-on-error: true
+
+      - name: Test AAP Demo
+        id: test
+        if: steps.deploy.outcome == 'success'
+        run: |
+          ansible-playbook playbooks/test_aap_demo.yml \
+            -i inventories/runners/hosts.yml \
+            -e "target_host=localhost"
+        env:
+          ANSIBLE_FORCE_COLOR: "true"
+        continue-on-error: true
+
+      - name: Create issue on failure
+        if: steps.deploy.outcome == 'failure' || steps.test.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = 'AAP Demo Scheduled Test Failed';
+            const deployStatus = '${{ steps.deploy.outcome }}';
+            const testStatus = '${{ steps.test.outcome }}';
+
+            const body = `## Scheduled Test Failure
+
+            **Date:** ${new Date().toISOString()}
+            **Workflow:** ${{ github.workflow }}
+            **Run ID:** ${{ github.run_id }}
+            **Runner:** ${process.env.RUNNER_NAME || 'unknown'}
+
+            ### Test Results
+            - **Deployment:** ${deployStatus === 'success' ? '[PASS] Passed' : '[FAIL] Failed'}
+            - **Tests:** ${testStatus === 'success' ? '[PASS] Passed' : testStatus === 'skipped' ? '[SKIP] Skipped' : '[FAIL] Failed'}
+
+            ### Action Required
+            Please investigate and resolve the test failure.
+
+            [View workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            ---
+            *This issue was automatically created by GitHub Actions scheduled test*
+            `;
+
+            // Check if an open issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'automated-test-failure'
+            });
+
+            const existingIssue = issues.data.find(issue => issue.title === title);
+
+            if (!existingIssue) {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['automated-test-failure', 'bug', 'ci-cd']
+              });
+              console.log('Created new issue for test failure');
+            } else {
+              // Add comment to existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `## Another Failure Occurred\n\n${body}`
+              });
+              console.log(`Added comment to existing issue #${existingIssue.number}`);
+            }
+
+      - name: Cleanup AAP Demo
+        if: always()
+        run: |
+          ansible-playbook playbooks/cleanup_aap_demo.yml \
+            -i inventories/runners/hosts.yml \
+            -e "target_host=localhost"
+        env:
+          ANSIBLE_FORCE_COLOR: "true"
+        continue-on-error: true
+
+      - name: Final status check
+        if: steps.deploy.outcome == 'failure' || steps.test.outcome == 'failure'
+        run: |
+          echo "Scheduled test failed"
+          exit 1
