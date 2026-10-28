@@ -1,6 +1,39 @@
 ---
-# Example Collections Requirements
-# Usage:
-#  - name: <collection name>
-#    version: 1.0.0
-collections: []
+# Collections required for AAP Demo GitHub Runner Management
+
+collections:
+  # AAP Configuration as Code
+  - name: infra.aap_configuration
+    version: ">=2.9.0"
+
+  # AAP Controller API integration
+  - name: ansible.controller
+    version: ">=4.5.0"
+
+  # Event-Driven Ansible
+  - name: ansible.eda
+    version: ">=1.4.0"
+
+  # AAP Platform collections
+  - name: ansible.platform
+    version: ">=1.0.0"
+
+  # General utilities and modules
+  - name: community.general
+    version: ">=8.0.0"
+
+  # POSIX systems support
+  - name: ansible.posix
+    version: ">=1.5.0"
+
+  # Windows support
+  - name: ansible.windows
+    version: ">=2.0.0"
+
+  # Community Windows modules
+  - name: community.windows
+    version: ">=2.0.0"
+
+  # Podman container management
+  - name: containers.podman
+    version: ">=1.12.0"

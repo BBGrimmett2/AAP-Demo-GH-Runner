@@ -1,0 +1,26 @@
+# System-level dependencies for AAP Demo Runner execution environment
+
+# Version control
+git-core [platform:rpm]
+
+# Python development headers
+python3-devel [platform:rpm]
+
+# Compiler toolchain
+gcc [compile platform:rpm]
+
+# SSH and remote execution
+openssh-clients [platform:rpm]
+sshpass [platform:rpm]
+
+# File transfer
+rsync [platform:rpm]
+
+# Podman container runtime
+podman [platform:rpm]
+buildah [platform:rpm]
+skopeo [platform:rpm]
+
+# Additional utilities
+curl [platform:rpm]
+jq [platform:rpm]
