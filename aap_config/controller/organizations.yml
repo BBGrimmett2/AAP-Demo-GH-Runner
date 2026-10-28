@@ -1,0 +1,9 @@
+---
+# AAP Controller Organizations Configuration
+
+controller_organizations:
+  - name: CI/CD
+    description: "Organization for CI/CD operations and GitHub runner management"
+    max_hosts: 0  # Unlimited hosts
+    galaxy_credentials:
+      - Ansible Galaxy

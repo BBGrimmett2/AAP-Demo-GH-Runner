@@ -1,0 +1,20 @@
+---
+# AAP Controller Inventories Configuration
+
+controller_inventories:
+  - name: GitHub Runners
+    organization: CI/CD
+    description: "Self-hosted GitHub Actions runners (RHEL and Windows)"
+
+# Inventory Sources
+controller_inventory_sources:
+  - name: Runner Inventory File
+    inventory: GitHub Runners
+    description: "Load runner hosts from repository inventory file"
+    source: scm
+    source_project: AAP Demo Runner Management
+    source_path: inventories/runners/hosts.yml
+    update_on_launch: true
+    overwrite: true
+    overwrite_vars: false
+    verbosity: 1

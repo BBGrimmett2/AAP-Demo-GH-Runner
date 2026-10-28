@@ -1,0 +1,9 @@
+---
+# EDA Controller Projects Configuration
+
+eda_projects:
+  - name: AAP Demo EDA
+    description: "Event-Driven Ansible rulebooks for AAP Demo CI/CD automation"
+    url: https://github.com/BBGrimmett2/AAP-Demo-GH-Runner.git
+    git_hash: devel
+    organization: CI/CD

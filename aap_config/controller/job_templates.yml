@@ -1,0 +1,126 @@
+---
+# AAP Controller Job Templates Configuration
+
+controller_templates:
+  # Day 0: Setup GitHub Runners (with dynamic token generation)
+  - name: Setup GitHub Runners
+    organization: CI/CD
+    description: "Install, configure, and start GitHub Actions self-hosted runners with dynamic token generation"
+    project: AAP Demo Runner Management
+    playbook: playbooks/setup_github_runners_with_dynamic_token.yml
+    inventory: GitHub Runners
+    credentials:
+      - Machine Credential
+      - GitHub PAT
+    ask_limit_on_launch: true
+    ask_variables_on_launch: false
+    concurrent_jobs_enabled: false
+    job_type: run
+    verbosity: 1
+    extra_vars:
+      github_runner_url: "https://github.com/RedHatOfficial/aap-demo"
+
+  # Day 0: Setup GitHub Runners (legacy - manual token)
+  - name: Setup GitHub Runners (Manual Token)
+    organization: CI/CD
+    description: "Install, configure, and start GitHub Actions self-hosted runners with manual token"
+    project: AAP Demo Runner Management
+    playbook: playbooks/setup_github_runners.yml
+    inventory: GitHub Runners
+    credentials:
+      - Machine Credential
+      - GitHub Runner Token
+    ask_limit_on_launch: true
+    ask_variables_on_launch: true
+    concurrent_jobs_enabled: false
+    job_type: run
+    verbosity: 1
+    extra_vars:
+      github_runner_url: "https://github.com/RedHatOfficial/aap-demo"
+
+  # Day 0: Setup Podman Desktop
+  - name: Setup Podman Desktop
+    organization: CI/CD
+    description: "Install and configure Podman Desktop on runner hosts"
+    project: AAP Demo Runner Management
+    playbook: playbooks/setup_podman_desktop.yml
+    inventory: GitHub Runners
+    credentials:
+      - Machine Credential
+      - Red Hat Registry
+    ask_limit_on_launch: true
+    ask_variables_on_launch: false
+    concurrent_jobs_enabled: true
+    job_type: run
+    verbosity: 1
+
+  # Day N: Deploy AAP Demo (with Slack notifications)
+  - name: Deploy AAP Demo
+    organization: CI/CD
+    description: "Deploy AAP Demo on runner systems (triggered by EDA) with Slack notifications"
+    project: AAP Demo Runner Management
+    playbook: playbooks/deploy_aap_demo_with_notifications.yml
+    inventory: GitHub Runners
+    credentials:
+      - Machine Credential
+      - Red Hat Registry
+      - Slack Webhook
+    ask_limit_on_launch: false
+    ask_variables_on_launch: true
+    concurrent_jobs_enabled: false
+    job_type: run
+    verbosity: 1
+    extra_vars:
+      target_host: "github_runners_rhel"  # Default to RHEL runners
+
+  # Day N: Test AAP Demo (with Slack notifications)
+  - name: Test AAP Demo
+    organization: CI/CD
+    description: "Run AAP Demo tests (deploy and/or status) with Slack notifications"
+    project: AAP Demo Runner Management
+    playbook: playbooks/test_aap_demo_with_notifications.yml
+    inventory: GitHub Runners
+    credentials:
+      - Machine Credential
+      - Slack Webhook
+    ask_limit_on_launch: false
+    ask_variables_on_launch: true
+    concurrent_jobs_enabled: true
+    job_type: run
+    verbosity: 1
+    extra_vars:
+      target_host: "github_runners_rhel"
+      test_type: "all"
+
+  # Day N: Cleanup AAP Demo
+  - name: Cleanup AAP Demo
+    organization: CI/CD
+    description: "Remove AAP Demo deployments from runner systems"
+    project: AAP Demo Runner Management
+    playbook: playbooks/cleanup_aap_demo.yml
+    inventory: GitHub Runners
+    credentials:
+      - Machine Credential
+    ask_limit_on_launch: false
+    ask_variables_on_launch: true
+    concurrent_jobs_enabled: true
+    job_type: run
+    verbosity: 1
+    extra_vars:
+      target_host: "github_runners"
+
+  # Maintenance: Check Runner Health (with Slack notifications)
+  - name: Check Runner Health
+    organization: CI/CD
+    description: "Verify GitHub runner health and connectivity with Slack notifications"
+    project: AAP Demo Runner Management
+    playbook: playbooks/check_runner_health_with_notifications.yml
+    inventory: GitHub Runners
+    credentials:
+      - Machine Credential
+      - Slack Webhook
+    ask_limit_on_launch: false
+    ask_variables_on_launch: false
+    concurrent_jobs_enabled: true
+    job_type: run  # Changed from check to run to allow notifications
+    verbosity: 0

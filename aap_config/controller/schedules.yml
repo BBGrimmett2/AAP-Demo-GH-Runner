@@ -1,0 +1,11 @@
+---
+# AAP Controller Schedules Configuration
+
+controller_schedules:
+  # Daily health check of GitHub runners
+  - name: Daily Runner Health Check
+    unified_job_template: Check Runner Health
+    description: "Daily automated health check of all GitHub Actions runners"
+    enabled: true
+    rrule: "DTSTART:20260101T020000Z RRULE:FREQ=DAILY;INTERVAL=1"
+    timezone: "UTC"

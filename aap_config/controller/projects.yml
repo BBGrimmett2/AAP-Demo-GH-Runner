@@ -1,0 +1,27 @@
+---
+# AAP Controller Projects Configuration
+
+controller_projects:
+  # This repository - contains runner management playbooks and roles
+  - name: AAP Demo Runner Management
+    organization: CI/CD
+    description: "GitHub Actions runner management and AAP Demo testing automation"
+    scm_type: git
+    scm_url: https://github.com/BBGrimmett2/AAP-Demo-GH-Runner.git
+    scm_branch: devel
+    scm_update_on_launch: true
+    scm_clean: true
+    scm_delete_on_update: false
+    wait: true
+
+  # Upstream AAP Demo repository
+  - name: AAP Demo Upstream
+    organization: CI/CD
+    description: "RedHatOfficial/aap-demo repository"
+    scm_type: git
+    scm_url: "https://github.com/RedHatOfficial/aap-demo.git"
+    scm_branch: main
+    scm_update_on_launch: true
+    scm_clean: true
+    scm_delete_on_update: false
+    wait: true
