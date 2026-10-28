@@ -1,0 +1,28 @@
+---
+# Validation tasks for slack_notification role
+
+- name: Validate Slack webhook URL is provided
+  ansible.builtin.assert:
+    that:
+      - slack_webhook_url is defined
+      - slack_webhook_url | length > 0
+      - slack_webhook_url is match('^https://hooks\.slack\.com/')
+    fail_msg: "slack_webhook_url must be defined and be a valid Slack webhook URL"
+    success_msg: "Slack webhook URL is valid"
+  no_log: true
+
+- name: Validate notification type
+  ansible.builtin.assert:
+    that:
+      - notification_type is defined
+      - notification_type in ['success', 'failure', 'warning', 'info']
+    fail_msg: "notification_type must be one of: success, failure, warning, info"
+    success_msg: "Notification type '{{ notification_type }}' is valid"
+
+- name: Validate job name is provided
+  ansible.builtin.assert:
+    that:
+      - job_name is defined
+      - job_name | length > 0
+    fail_msg: "job_name must be provided"
+    success_msg: "Job name '{{ job_name }}' is valid"
