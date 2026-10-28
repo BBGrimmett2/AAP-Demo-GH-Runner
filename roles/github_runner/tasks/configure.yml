@@ -1,0 +1,11 @@
+---
+# Public function: Configure GitHub Actions runner
+# Can be called via: ansible.builtin.import_role: name: github_runner, tasks_from: configure
+
+- name: Include platform-specific configuration tasks
+  ansible.builtin.include_tasks: "{{ item }}"
+  with_first_found:
+    - "configure_{{ ansible_os_family | lower }}.yml"
+    - "configure_{{ ansible_system | lower }}.yml"
+  vars:
+    _platform: "{{ ansible_os_family | lower }}"

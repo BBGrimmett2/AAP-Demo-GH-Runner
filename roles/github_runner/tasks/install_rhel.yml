@@ -1,0 +1,80 @@
+---
+# RHEL-specific installation tasks for GitHub Actions runner
+
+- name: Install required packages for GitHub runner
+  ansible.builtin.dnf:
+    name:
+      - tar
+      - gzip
+      - git
+      - curl
+      - jq
+      - dotnet-runtime-6.0
+    state: present
+  become: true
+
+- name: Create runner service account
+  ansible.builtin.user:
+    name: "{{ github_runner_user }}"
+    comment: "GitHub Actions Runner Service Account"
+    system: true
+    create_home: false
+    shell: /bin/bash
+  become: true
+
+- name: Create runner installation directory
+  ansible.builtin.file:
+    path: "{{ github_runner_work_directory }}"
+    state: directory
+    owner: "{{ github_runner_user }}"
+    group: "{{ github_runner_group_name }}"
+    mode: '0755'
+  become: true
+
+- name: Check if runner is already installed
+  ansible.builtin.stat:
+    path: "{{ github_runner_work_directory }}/bin/Runner.Listener"
+  register: runner_installed
+
+- name: Download and install GitHub Actions runner
+  when: not runner_installed.stat.exists
+  block:
+    - name: Download GitHub Actions runner package
+      ansible.builtin.get_url:
+        url: "{{ github_runner_download_url }}/v{{ github_runner_version }}/actions-runner-linux-x64-{{ github_runner_version }}.tar.gz"
+        dest: "/tmp/actions-runner-linux-x64-{{ github_runner_version }}.tar.gz"
+        mode: '0644'
+        timeout: "{{ github_runner_install_timeout }}"
+
+    - name: Extract runner package
+      ansible.builtin.unarchive:
+        src: "/tmp/actions-runner-linux-x64-{{ github_runner_version }}.tar.gz"
+        dest: "{{ github_runner_work_directory }}"
+        remote_src: true
+        owner: "{{ github_runner_user }}"
+        group: "{{ github_runner_group_name }}"
+      become: true
+
+    - name: Clean up downloaded package
+      ansible.builtin.file:
+        path: "/tmp/actions-runner-linux-x64-{{ github_runner_version }}.tar.gz"
+        state: absent
+
+- name: Set ownership of runner directory
+  ansible.builtin.file:
+    path: "{{ github_runner_work_directory }}"
+    state: directory
+    owner: "{{ github_runner_user }}"
+    group: "{{ github_runner_group_name }}"
+    recurse: true
+  become: true
+
+- name: Install runner dependencies
+  ansible.builtin.command:
+    cmd: ./bin/installdependencies.sh
+    chdir: "{{ github_runner_work_directory }}"
+  become: true
+  register: install_deps
+  changed_when: install_deps.rc == 0
+  failed_when: install_deps.rc != 0
+  when: not runner_installed.stat.exists

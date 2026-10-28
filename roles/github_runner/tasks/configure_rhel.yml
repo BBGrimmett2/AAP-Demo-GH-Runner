@@ -1,0 +1,47 @@
+---
+# RHEL-specific configuration tasks for GitHub Actions runner
+
+- name: Check if runner is already configured
+  ansible.builtin.stat:
+    path: "{{ github_runner_work_directory }}/.runner"
+  register: runner_configured
+
+- name: Configure GitHub Actions runner
+  when: not runner_configured.stat.exists or github_runner_replace_existing
+  block:
+    - name: Build configuration command
+      ansible.builtin.set_fact:
+        runner_config_cmd: >-
+          ./config.sh
+          --url {{ github_runner_url }}
+          --token {{ github_runner_token }}
+          --name {{ github_runner_name }}
+          --runnergroup {{ github_runner_group }}
+          --work _work
+          --labels {{ (github_runner_labels + ['self-hosted', 'linux', 'x64']) | unique | join(',') }}
+          {{ '--replace' if github_runner_replace_existing else '' }}
+          {{ '--ephemeral' if github_runner_ephemeral else '' }}
+          {{ '--disableupdate' if github_runner_disable_update else '' }}
+          --unattended
+
+    - name: Register runner with GitHub
+      ansible.builtin.shell: |
+        {{ runner_config_cmd }}
+      args:
+        chdir: "{{ github_runner_work_directory }}"
+      become: true
+      become_user: "{{ github_runner_user }}"
+      register: runner_registration
+      changed_when: runner_registration.rc == 0
+      failed_when: runner_registration.rc != 0
+      no_log: true
+
+    - name: Display registration result (sanitized)
+      ansible.builtin.debug:
+        msg: "Runner {{ github_runner_name }} registered successfully"
+
+- name: Verify runner configuration
+  ansible.builtin.stat:
+    path: "{{ github_runner_work_directory }}/.runner"
+  register: runner_config_check
+  failed_when: not runner_config_check.stat.exists

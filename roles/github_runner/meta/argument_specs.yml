@@ -1,0 +1,154 @@
+---
+argument_specs:
+  main:
+    short_description: Install, configure, and manage GitHub Actions self-hosted runners
+    description:
+      - This role installs and configures GitHub Actions self-hosted runners on RHEL and Windows platforms
+      - Handles runner registration, service configuration, and health monitoring
+      - Supports both RHEL (systemd) and Windows (Windows Service) platforms
+    author: Ansible Automation
+
+    options:
+      github_runner_url:
+        description: GitHub repository URL where the runner will be registered
+        type: str
+        required: true
+
+      github_runner_token:
+        description: GitHub runner registration token (from GitHub API or PAT)
+        type: str
+        required: true
+        no_log: true
+
+      github_runner_version:
+        description: GitHub Actions runner version to install
+        type: str
+        default: "2.320.0"
+
+      github_runner_name:
+        description: Name for the runner (defaults to hostname)
+        type: str
+        default: "{{ inventory_hostname }}"
+
+      github_runner_group:
+        description: Runner group name
+        type: str
+        default: "Default"
+
+      github_runner_labels:
+        description: Custom labels to add to the runner (in addition to default labels)
+        type: list
+        elements: str
+        default: []
+
+      github_runner_replace_existing:
+        description: Replace existing runner with the same name
+        type: bool
+        default: false
+
+      github_runner_ephemeral:
+        description: Configure runner as ephemeral (removed after one job)
+        type: bool
+        default: false
+
+      github_runner_disable_update:
+        description: Disable automatic runner updates
+        type: bool
+        default: false
+
+      github_runner_work_directory:
+        description: Working directory for the runner
+        type: str
+
+      github_runner_user:
+        description: User account to run the runner service
+        type: str
+
+  install:
+    short_description: Install GitHub Actions runner binaries
+    description:
+      - Downloads and extracts GitHub Actions runner binaries
+      - Creates necessary directories and service accounts
+      - Platform-specific installation (RHEL vs Windows)
+
+    options:
+      github_runner_version:
+        description: GitHub Actions runner version to install
+        type: str
+        default: "2.320.0"
+
+      github_runner_work_directory:
+        description: Installation directory for the runner
+        type: str
+        required: true
+
+  configure:
+    short_description: Configure and register GitHub Actions runner
+    description:
+      - Registers runner with GitHub
+      - Configures runner settings (name, labels, group)
+      - Sets up authentication
+
+    options:
+      github_runner_url:
+        description: GitHub repository URL
+        type: str
+        required: true
+
+      github_runner_token:
+        description: Registration token
+        type: str
+        required: true
+        no_log: true
+
+      github_runner_name:
+        description: Runner name
+        type: str
+        required: true
+
+      github_runner_labels:
+        description: Custom labels
+        type: list
+        elements: str
+        default: []
+
+      github_runner_group:
+        description: Runner group
+        type: str
+        default: "Default"
+
+      github_runner_replace_existing:
+        description: Replace existing runner
+        type: bool
+        default: false
+
+  service:
+    short_description: Configure and start runner service
+    description:
+      - Configures runner as a system service (systemd or Windows Service)
+      - Starts and enables the service
+      - Verifies service is running
+
+    options:
+      github_runner_work_directory:
+        description: Runner installation directory
+        type: str
+        required: true
+
+      github_runner_user:
+        description: Service user account
+        type: str
+        required: true
+
+  health_check:
+    short_description: Verify runner health and connectivity
+    description:
+      - Checks if runner service is running
+      - Verifies runner is registered and connected to GitHub
+      - Reports runner status
+
+    options:
+      github_runner_work_directory:
+        description: Runner installation directory
+        type: str
+        required: true

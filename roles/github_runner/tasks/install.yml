@@ -1,0 +1,11 @@
+---
+# Public function: Install GitHub Actions runner
+# Can be called via: ansible.builtin.import_role: name: github_runner, tasks_from: install
+
+- name: Include platform-specific installation tasks
+  ansible.builtin.include_tasks: "{{ item }}"
+  with_first_found:
+    - "install_{{ ansible_os_family | lower }}.yml"
+    - "install_{{ ansible_system | lower }}.yml"
+  vars:
+    _platform: "{{ ansible_os_family | lower }}"

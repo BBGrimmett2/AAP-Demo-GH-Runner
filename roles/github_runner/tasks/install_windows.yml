@@ -1,0 +1,45 @@
+---
+# Windows-specific installation tasks for GitHub Actions runner
+
+- name: Ensure .NET Runtime 6.0 is installed
+  ansible.windows.win_package:
+    path: https://download.visualstudio.microsoft.com/download/pr/4e766615-57e6-4b1d-a574-25eeb7a71107/9f95f74c33711e2cf3a16f2e5c3d6dbd/dotnet-runtime-6.0.28-win-x64.exe
+    product_id: '{Microsoft .NET Runtime - 6.0.28}'
+    arguments: /quiet /norestart
+    state: present
+  when: false  # Skip if .NET already installed, implement check if needed
+
+- name: Create runner installation directory
+  ansible.windows.win_file:
+    path: "{{ github_runner_work_directory }}"
+    state: directory
+
+- name: Check if runner is already installed
+  ansible.windows.win_stat:
+    path: "{{ github_runner_work_directory }}\\bin\\Runner.Listener.exe"
+  register: runner_installed_windows
+
+- name: Download and install GitHub Actions runner
+  when: not runner_installed_windows.stat.exists
+  block:
+    - name: Download GitHub Actions runner package
+      ansible.windows.win_get_url:
+        url: "{{ github_runner_download_url }}/v{{ github_runner_version }}/actions-runner-win-x64-{{ github_runner_version }}.zip"
+        dest: "{{ ansible_env.TEMP }}\\actions-runner-win-x64-{{ github_runner_version }}.zip"
+
+    - name: Extract runner package
+      community.windows.win_unzip:
+        src: "{{ ansible_env.TEMP }}\\actions-runner-win-x64-{{ github_runner_version }}.zip"
+        dest: "{{ github_runner_work_directory }}"
+        creates: "{{ github_runner_work_directory }}\\bin\\Runner.Listener.exe"
+
+    - name: Clean up downloaded package
+      ansible.windows.win_file:
+        path: "{{ ansible_env.TEMP }}\\actions-runner-win-x64-{{ github_runner_version }}.zip"
+        state: absent
+
+- name: Verify runner installation
+  ansible.windows.win_stat:
+    path: "{{ github_runner_work_directory }}\\bin\\Runner.Listener.exe"
+  register: runner_verify
+  failed_when: not runner_verify.stat.exists

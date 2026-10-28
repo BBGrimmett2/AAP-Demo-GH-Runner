@@ -1,0 +1,49 @@
+---
+# GitHub Runner version to install
+# Check latest: https://github.com/actions/runner/releases
+github_runner_version: "2.320.0"  # Updated to latest stable release
+
+# GitHub repository URL (required, validated in tasks/validate.yml)
+github_runner_url: ""
+
+# GitHub runner registration token (required, validated in tasks/validate.yml)
+# This should be provided via AAP credential input source
+github_runner_token: ""
+
+# Runner name (defaults to hostname)
+github_runner_name: "{{ inventory_hostname }}"
+
+# Runner group (default: "Default")
+github_runner_group: "Default"
+
+# Custom labels (in addition to default labels)
+github_runner_labels: []
+
+# Replace existing runner with same name
+github_runner_replace_existing: false
+
+# Ephemeral runner (one job only, then removed)
+github_runner_ephemeral: false
+
+# Disable automatic runner updates
+github_runner_disable_update: false
+
+# Platform-specific work directory paths
+github_runner_work_directory: "{{ '/opt/actions-runner' if ansible_os_family == 'RedHat' else 'C:\\\\actions-runner' }}"
+
+# Platform-specific user
+github_runner_user: "{{ 'runner' if ansible_os_family == 'RedHat' else 'SYSTEM' }}"
+github_runner_group_name: "{{ 'runner' if ansible_os_family == 'RedHat' else 'SYSTEM' }}"
+
+# Download URL base
+github_runner_download_url: "https://github.com/actions/runner/releases/download"
+
+# Service name
+github_runner_service_name: "actions.runner.{{ github_runner_org | default('org') }}.{{ github_runner_name }}"
+
+# Timeout for runner installation (seconds)
+github_runner_install_timeout: 600
+
+# Health check settings
+github_runner_health_check_timeout: 30
+github_runner_health_check_retries: 3

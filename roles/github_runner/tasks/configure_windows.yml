@@ -1,0 +1,44 @@
+---
+# Windows-specific configuration tasks for GitHub Actions runner
+
+- name: Check if runner is already configured
+  ansible.windows.win_stat:
+    path: "{{ github_runner_work_directory }}\\.runner"
+  register: runner_configured_windows
+
+- name: Configure GitHub Actions runner
+  when: not runner_configured_windows.stat.exists or github_runner_replace_existing
+  block:
+    - name: Build labels list
+      ansible.builtin.set_fact:
+        runner_labels_windows: "{{ (github_runner_labels + ['self-hosted', 'windows', 'x64']) | unique | join(',') }}"
+
+    - name: Register runner with GitHub
+      ansible.windows.win_shell: |
+        .\\config.cmd `
+          --url {{ github_runner_url }} `
+          --token {{ github_runner_token }} `
+          --name {{ github_runner_name }} `
+          --runnergroup {{ github_runner_group }} `
+          --work _work `
+          --labels {{ runner_labels_windows }} `
+          {{ '--replace' if github_runner_replace_existing else '' }} `
+          {{ '--ephemeral' if github_runner_ephemeral else '' }} `
+          {{ '--disableupdate' if github_runner_disable_update else '' }} `
+          --unattended
+      args:
+        chdir: "{{ github_runner_work_directory }}"
+      register: runner_registration_windows
+      changed_when: runner_registration_windows.rc == 0
+      failed_when: runner_registration_windows.rc != 0
+      no_log: true
+
+    - name: Display registration result (sanitized)
+      ansible.builtin.debug:
+        msg: "Runner {{ github_runner_name }} registered successfully"
+
+- name: Verify runner configuration
+  ansible.windows.win_stat:
+    path: "{{ github_runner_work_directory }}\\.runner"
+  register: runner_config_check_windows
+  failed_when: not runner_config_check_windows.stat.exists

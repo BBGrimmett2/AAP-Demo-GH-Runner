@@ -1,0 +1,16 @@
+---
+# Handlers for github_runner role
+
+- name: Restart runner service (RHEL)
+  ansible.builtin.systemd:
+    name: "{{ github_runner_service_name }}"
+    state: restarted
+    daemon_reload: true
+  become: true
+  when: ansible_os_family == 'RedHat'
+
+- name: Restart runner service (Windows)
+  ansible.windows.win_service:
+    name: "{{ github_runner_service_name }}"
+    state: restarted
+  when: ansible_os_family == 'Windows'

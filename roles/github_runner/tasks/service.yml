@@ -1,0 +1,57 @@
+---
+# Service configuration tasks for GitHub Actions runner (both RHEL and Windows)
+
+# RHEL service configuration
+- name: Configure systemd service (RHEL)
+  when: ansible_os_family == 'RedHat'
+  block:
+    - name: Install runner as systemd service
+      ansible.builtin.command:
+        cmd: ./svc.sh install {{ github_runner_user }}
+        chdir: "{{ github_runner_work_directory }}"
+      become: true
+      register: service_install
+      changed_when: "'already exists' not in service_install.stdout"
+      failed_when: service_install.rc != 0 and 'already exists' not in service_install.stdout
+
+    - name: Start and enable runner service
+      ansible.builtin.systemd:
+        name: "{{ github_runner_service_name }}"
+        state: started
+        enabled: true
+        daemon_reload: true
+      become: true
+
+    - name: Verify service is running
+      ansible.builtin.systemd:
+        name: "{{ github_runner_service_name }}"
+      register: service_status
+      become: true
+      failed_when: service_status.status.ActiveState != 'active'
+
+# Windows service configuration
+- name: Configure Windows service
+  when: ansible_os_family == 'Windows'
+  block:
+    - name: Install runner as Windows service
+      ansible.windows.win_shell: |
+        .\\svc.sh install
+      args:
+        chdir: "{{ github_runner_work_directory }}"
+      register: service_install_windows
+      changed_when: "'service already exists' not in service_install_windows.stderr"
+      failed_when: service_install_windows.rc != 0 and 'service already exists' not in service_install_windows.stderr
+
+    - name: Start runner Windows service
+      ansible.windows.win_shell: |
+        .\\svc.sh start
+      args:
+        chdir: "{{ github_runner_work_directory }}"
+      register: service_start_windows
+      changed_when: service_start_windows.rc == 0
+
+    - name: Verify Windows service is running
+      ansible.windows.win_service:
+        name: "{{ github_runner_service_name }}"
+      register: service_status_windows
+      failed_when: service_status_windows.state != 'running'

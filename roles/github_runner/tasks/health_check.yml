@@ -1,0 +1,54 @@
+---
+# Public function: Check GitHub Actions runner health
+# Can be called via: ansible.builtin.import_role: name: github_runner, tasks_from: health_check
+
+- name: Check runner configuration exists
+  ansible.builtin.stat:
+    path: "{{ github_runner_work_directory }}/.runner"
+  register: runner_config_exists
+
+- name: Assert runner is configured
+  ansible.builtin.assert:
+    that:
+      - runner_config_exists.stat.exists
+    fail_msg: "Runner is not configured at {{ github_runner_work_directory }}"
+    success_msg: "Runner configuration found"
+
+# RHEL health check
+- name: Check runner service health (RHEL)
+  when: ansible_os_family == 'RedHat'
+  block:
+    - name: Get service status
+      ansible.builtin.systemd:
+        name: "{{ github_runner_service_name }}"
+      register: service_health
+      become: true
+
+    - name: Assert service is running
+      ansible.builtin.assert:
+        that:
+          - service_health.status.ActiveState == 'active'
+          - service_health.status.SubState == 'running'
+        fail_msg: "Runner service is not healthy: {{ service_health.status.ActiveState }}/{{ service_health.status.SubState }}"
+        success_msg: "Runner service is healthy and running"
+
+# Windows health check
+- name: Check runner service health (Windows)
+  when: ansible_os_family == 'Windows'
+  block:
+    - name: Get Windows service status
+      ansible.windows.win_service:
+        name: "{{ github_runner_service_name }}"
+      register: service_health_windows
+
+    - name: Assert Windows service is running
+      ansible.builtin.assert:
+        that:
+          - service_health_windows.state == 'running'
+          - service_health_windows.start_mode == 'auto'
+        fail_msg: "Runner service is not healthy: {{ service_health_windows.state }}"
+        success_msg: "Runner service is healthy and running"
+
+- name: Set health check result
+  ansible.builtin.set_fact:
+    github_runner_healthy: true

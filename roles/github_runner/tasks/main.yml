@@ -1,0 +1,23 @@
+---
+# Main orchestration for github_runner role
+# Executes: validate → install → configure → service
+
+- name: Validate role variables and prerequisites
+  ansible.builtin.import_tasks: validate.yml
+  tags:
+    - always
+
+- name: Install GitHub Actions runner
+  ansible.builtin.import_tasks: install.yml
+  tags:
+    - install
+
+- name: Configure GitHub Actions runner
+  ansible.builtin.import_tasks: configure.yml
+  tags:
+    - configure
+
+- name: Setup runner service
+  ansible.builtin.import_tasks: service.yml
+  tags:
+    - service
