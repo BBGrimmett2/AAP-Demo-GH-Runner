@@ -1,0 +1,17 @@
+---
+# Main orchestration for podman_desktop role
+
+- name: Validate role variables and prerequisites
+  ansible.builtin.import_tasks: validate.yml
+  tags:
+    - always
+
+- name: Install Podman Desktop
+  ansible.builtin.import_tasks: install.yml
+  tags:
+    - install
+
+- name: Configure Podman Desktop
+  ansible.builtin.import_tasks: configure.yml
+  tags:
+    - configure

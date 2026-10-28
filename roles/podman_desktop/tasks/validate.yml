@@ -1,0 +1,43 @@
+---
+# Validation tasks for podman_desktop role
+
+- name: Validate platform is supported
+  ansible.builtin.assert:
+    that:
+      - ansible_os_family in ['RedHat', 'Windows']
+    fail_msg: "Unsupported platform: {{ ansible_os_family }}. Only RedHat and Windows are supported."
+    success_msg: "Platform {{ ansible_os_family }} is supported"
+
+# RHEL-specific validation
+- name: Validate RHEL prerequisites
+  when: ansible_os_family == 'RedHat'
+  block:
+    - name: Check if flatpak is available
+      ansible.builtin.command: flatpak --version
+      register: flatpak_check
+      changed_when: false
+      failed_when: false
+
+    - name: Assert flatpak is installed
+      ansible.builtin.assert:
+        that:
+          - flatpak_check.rc == 0
+        fail_msg: "Flatpak is required for Podman Desktop on RHEL. Install with: sudo dnf install flatpak"
+        success_msg: "Flatpak is available"
+
+# Windows-specific validation
+- name: Validate Windows prerequisites
+  when: ansible_os_family == 'Windows'
+  block:
+    - name: Check WSL2 status
+      ansible.windows.win_shell: wsl --status
+      register: wsl_status
+      changed_when: false
+      failed_when: false
+
+    - name: Assert WSL2 is available
+      ansible.builtin.assert:
+        that:
+          - wsl_status.rc == 0
+        fail_msg: "WSL2 is required for Podman Desktop on Windows. Install with: wsl --install"
+        success_msg: "WSL2 is available"

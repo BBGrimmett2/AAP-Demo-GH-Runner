@@ -1,0 +1,44 @@
+---
+# RHEL-specific installation tasks for Podman Desktop
+
+- name: Ensure flatpak is installed
+  ansible.builtin.dnf:
+    name: flatpak
+    state: present
+  become: true
+
+- name: Add Flathub repository
+  ansible.builtin.command:
+    cmd: flatpak remote-add --if-not-exists flathub {{ podman_desktop_flatpak_remote_url }}
+  register: flathub_add
+  changed_when: "'already exists' not in flathub_add.stderr"
+  failed_when: flathub_add.rc != 0 and 'already exists' not in flathub_add.stderr
+
+- name: Check if Podman Desktop is already installed
+  ansible.builtin.command:
+    cmd: flatpak list --app | grep {{ podman_desktop_flatpak_id }}
+  register: podman_desktop_installed
+  changed_when: false
+  failed_when: false
+
+- name: Install Podman Desktop via Flatpak
+  ansible.builtin.command:
+    cmd: flatpak install -y flathub {{ podman_desktop_flatpak_id }}
+  when: podman_desktop_installed.rc != 0
+  register: podman_desktop_install
+  changed_when: podman_desktop_install.rc == 0
+
+- name: Ensure podman CLI is installed
+  ansible.builtin.dnf:
+    name:
+      - podman
+      - podman-compose
+    state: present
+  become: true
+
+- name: Verify Podman Desktop installation
+  ansible.builtin.command:
+    cmd: flatpak list --app | grep {{ podman_desktop_flatpak_id }}
+  register: podman_desktop_verify
+  changed_when: false
+  failed_when: podman_desktop_verify.rc != 0

@@ -1,0 +1,30 @@
+---
+# Windows-specific installation tasks for Podman Desktop
+
+- name: Ensure WSL2 is installed and running
+  ansible.windows.win_shell: wsl --list --verbose
+  register: wsl_list
+  changed_when: false
+
+- name: Download Podman Desktop installer
+  ansible.windows.win_get_url:
+    url: "{{ podman_desktop_windows_installer_url }}"
+    dest: "{{ ansible_env.TEMP }}\\podman-desktop-setup.exe"
+  register: podman_desktop_download
+
+- name: Install Podman Desktop
+  ansible.windows.win_package:
+    path: "{{ ansible_env.TEMP }}\\podman-desktop-setup.exe"
+    arguments: /S  # Silent install
+    state: present
+  when: podman_desktop_download.changed
+
+- name: Clean up installer
+  ansible.windows.win_file:
+    path: "{{ ansible_env.TEMP }}\\podman-desktop-setup.exe"
+    state: absent
+
+- name: Verify Podman CLI is available
+  ansible.windows.win_shell: podman --version
+  register: podman_version_windows
+  changed_when: false

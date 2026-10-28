@@ -1,0 +1,12 @@
+---
+# Handlers for podman_desktop role
+
+- name: Restart podman machine (RHEL)
+  ansible.builtin.command:
+    cmd: podman machine restart {{ podman_machine_name }}
+  when: ansible_os_family == 'RedHat'
+
+- name: Restart podman machine (Windows)
+  ansible.windows.win_shell:
+    cmd: podman machine restart {{ podman_machine_name }}
+  when: ansible_os_family == 'Windows'

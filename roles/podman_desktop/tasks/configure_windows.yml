@@ -1,0 +1,55 @@
+---
+# Windows-specific configuration tasks for Podman Desktop
+
+- name: Create podman configuration directory
+  ansible.windows.win_file:
+    path: "{{ podman_config_dir_windows }}"
+    state: directory
+
+- name: Check if podman machine exists
+  ansible.windows.win_shell: podman machine list --format json
+  register: podman_machine_list_windows
+  changed_when: false
+  failed_when: false
+
+- name: Initialize podman machine if not exists
+  ansible.windows.win_shell: |
+    podman machine init `
+      --cpus {{ podman_machine_cpus }} `
+      --memory {{ podman_machine_memory }} `
+      --disk-size {{ podman_machine_disk_size }} `
+      {{ podman_machine_name }}
+  when: podman_machine_list_windows.stdout == '[]' or podman_machine_list_windows.stdout == ''
+  register: podman_machine_init_windows
+  changed_when: podman_machine_init_windows.rc == 0
+
+- name: Start podman machine
+  ansible.windows.win_shell: podman machine start {{ podman_machine_name }}
+  register: podman_machine_start_windows
+  changed_when: "'already running' not in podman_machine_start_windows.stderr"
+  failed_when: podman_machine_start_windows.rc != 0 and 'already running' not in podman_machine_start_windows.stderr
+
+- name: Configure Red Hat registry authentication
+  when:
+    - redhat_registry_username is defined
+    - redhat_registry_username | length > 0
+    - redhat_registry_password is defined
+    - redhat_registry_password | length > 0
+  block:
+    - name: Login to Red Hat registry
+      ansible.windows.win_shell: |
+        echo "{{ redhat_registry_password }}" | podman login --username {{ redhat_registry_username }} --password-stdin {{ redhat_registry_url }}
+      register: registry_login_windows
+      changed_when: registry_login_windows.rc == 0
+      no_log: true
+
+    - name: Verify registry authentication
+      ansible.windows.win_shell: podman login --get-login {{ redhat_registry_url }}
+      register: registry_verify_windows
+      changed_when: false
+      failed_when: registry_verify_windows.stdout | trim != redhat_registry_username
+
+- name: Verify podman is functional
+  ansible.windows.win_shell: podman version
+  register: podman_verify_windows
+  changed_when: false

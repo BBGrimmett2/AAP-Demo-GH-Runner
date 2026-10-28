@@ -1,0 +1,67 @@
+---
+# RHEL-specific configuration tasks for Podman Desktop
+
+- name: Create podman configuration directory
+  ansible.builtin.file:
+    path: "{{ podman_config_dir_rhel }}"
+    state: directory
+    mode: '0755'
+
+- name: Check if podman machine exists
+  ansible.builtin.command:
+    cmd: podman machine list --format json
+  register: podman_machine_list
+  changed_when: false
+  failed_when: false
+
+- name: Initialize podman machine if not exists
+  ansible.builtin.command:
+    cmd: >
+      podman machine init
+      --cpus {{ podman_machine_cpus }}
+      --memory {{ podman_machine_memory }}
+      --disk-size {{ podman_machine_disk_size }}
+      {{ podman_machine_name }}
+  when: podman_machine_list.stdout == '[]' or podman_machine_list.stdout == ''
+  register: podman_machine_init
+  changed_when: podman_machine_init.rc == 0
+
+- name: Start podman machine
+  ansible.builtin.command:
+    cmd: podman machine start {{ podman_machine_name }}
+  register: podman_machine_start
+  changed_when: "'already running' not in podman_machine_start.stderr"
+  failed_when: podman_machine_start.rc != 0 and 'already running' not in podman_machine_start.stderr
+
+- name: Configure Red Hat registry authentication
+  when:
+    - redhat_registry_username is defined
+    - redhat_registry_username | length > 0
+    - redhat_registry_password is defined
+    - redhat_registry_password | length > 0
+  block:
+    - name: Login to Red Hat registry
+      ansible.builtin.command:
+        cmd: >
+          podman login
+          --username {{ redhat_registry_username }}
+          --password-stdin
+          {{ redhat_registry_url }}
+      args:
+        stdin: "{{ redhat_registry_password }}"
+      register: registry_login
+      changed_when: registry_login.rc == 0
+      no_log: true
+
+    - name: Verify registry authentication
+      ansible.builtin.command:
+        cmd: podman login --get-login {{ redhat_registry_url }}
+      register: registry_verify
+      changed_when: false
+      failed_when: registry_verify.stdout != redhat_registry_username
+
+- name: Verify podman is functional
+  ansible.builtin.command:
+    cmd: podman version
+  register: podman_verify
+  changed_when: false

@@ -1,0 +1,7 @@
+---
+# Public function: Configure Podman Desktop
+
+- name: Include platform-specific configuration tasks
+  ansible.builtin.include_tasks: "{{ item }}"
+  with_first_found:
+    - "configure_{{ ansible_os_family | lower }}.yml"

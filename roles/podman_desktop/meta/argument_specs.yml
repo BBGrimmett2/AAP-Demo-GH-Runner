@@ -1,0 +1,82 @@
+---
+argument_specs:
+  main:
+    short_description: Install and configure Podman Desktop on RHEL and Windows
+    description:
+      - Installs Podman Desktop via Flatpak (RHEL) or MSI (Windows)
+      - Configures Podman machine with resource allocation
+      - Sets up Red Hat registry authentication for pulling AAP execution environments
+    author: Ansible Automation
+
+    options:
+      podman_desktop_version:
+        description: Podman Desktop version to install
+        type: str
+        default: "latest"
+
+      podman_machine_cpus:
+        description: Number of CPUs to allocate to Podman machine
+        type: int
+        default: 2
+
+      podman_machine_memory:
+        description: Memory in MB to allocate to Podman machine
+        type: int
+        default: 4096
+
+      podman_machine_disk_size:
+        description: Disk size in GB for Podman machine
+        type: int
+        default: 100
+
+      redhat_registry_username:
+        description: Red Hat registry username
+        type: str
+        required: false
+
+      redhat_registry_password:
+        description: Red Hat registry password
+        type: str
+        required: false
+        no_log: true
+
+  install:
+    short_description: Install Podman Desktop binaries
+    description:
+      - Platform-specific installation of Podman Desktop
+      - RHEL uses Flatpak, Windows uses MSI installer
+
+    options:
+      podman_desktop_version:
+        description: Version to install
+        type: str
+        default: "latest"
+
+  configure:
+    short_description: Configure Podman machine and registry authentication
+    description:
+      - Initializes Podman machine with resource allocation
+      - Configures Red Hat registry authentication
+      - Verifies Podman functionality
+
+    options:
+      podman_machine_cpus:
+        description: CPU allocation
+        type: int
+        default: 2
+
+      podman_machine_memory:
+        description: Memory allocation in MB
+        type: int
+        default: 4096
+
+      redhat_registry_username:
+        description: Registry username
+        type: str
+        required: false
+
+      redhat_registry_password:
+        description: Registry password
+        type: str
+        required: false
+        no_log: true

@@ -1,0 +1,31 @@
+---
+# Podman Desktop version to install
+podman_desktop_version: "latest"
+
+# RHEL Flatpak configuration
+podman_desktop_flatpak_id: "io.podman_desktop.PodmanDesktop"
+podman_desktop_flatpak_remote: "flathub"
+podman_desktop_flatpak_remote_url: "https://flathub.org/repo/flathub.flatpakrepo"
+
+# Windows installer URL
+podman_desktop_windows_installer_url: "https://github.com/containers/podman-desktop/releases/latest/download/podman-desktop-setup.exe"
+
+# Podman machine configuration
+podman_machine_name: "podman-machine-default"
+podman_machine_cpus: 2
+podman_machine_memory: 4096  # MB
+podman_machine_disk_size: 100  # GB
+
+# Red Hat registry authentication
+# These should come from AAP credential input sources
+redhat_registry_url: "registry.redhat.io"
+redhat_registry_username: ""
+redhat_registry_password: ""
+
+# Podman configuration paths
+podman_config_dir_rhel: "{{ ansible_env.HOME }}/.config/containers"
+podman_config_dir_windows: "{{ ansible_env.USERPROFILE }}\\.config\\containers"
+
+# WSL2 configuration for Windows
+podman_wsl_required: true
+podman_wsl_distro: "Ubuntu"
