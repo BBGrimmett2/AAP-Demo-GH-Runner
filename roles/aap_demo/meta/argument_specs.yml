@@ -1,10 +1,10 @@
 ---
 argument_specs:
   main:
-    short_description: Deploy and test AAP Demo application
+    short_description: Clone and manage AAP Demo repository
     description:
-      - Clones and deploys AAP Demo from GitHub
-      - Runs status and deployment tests
+      - Clones AAP Demo repository from GitHub
+      - Runs status checks and tests
       - Provides cleanup functionality
     author: Ansible Automation
 
@@ -15,26 +15,20 @@ argument_specs:
         default: "https://github.com/RedHatOfficial/aap-demo.git"
 
       aap_demo_branch:
-        description: Git branch to deploy
+        description: Git branch to clone
         type: str
         default: "main"
 
       aap_demo_workdir:
-        description: Working directory for AAP Demo
+        description: Working directory for AAP Demo repository
         type: str
         default: "/tmp/aap-demo"
 
-      aap_demo_deploy_timeout:
-        description: Deployment timeout in seconds
-        type: int
-        default: 600
-
   deploy:
-    short_description: Deploy AAP Demo
+    short_description: Clone AAP Demo repository
     description:
-      - Clones AAP Demo repository
-      - Runs deployment process
-      - Waits for deployment to complete
+      - Clones or updates AAP Demo repository from GitHub
+      - Does not install Podman Desktop or start services
 
     options:
       aap_demo_repo_url:
@@ -43,15 +37,15 @@ argument_specs:
         required: true
 
       aap_demo_branch:
-        description: Branch to deploy
+        description: Branch to clone
         type: str
         default: "main"
 
   status:
-    short_description: Check AAP Demo status
+    short_description: Check AAP Demo repository status
     description:
-      - Verifies AAP Demo deployment status
-      - Returns health status
+      - Verifies AAP Demo repository is cloned
+      - Returns repository information
 
     options:
       aap_demo_workdir:
@@ -60,7 +54,7 @@ argument_specs:
         required: true
 
   test:
-    short_description: Run AAP Demo tests
+    short_description: Run AAP Demo repository tests
     description:
       - Executes AAP Demo test suite
       - Supports deploy and status tests
@@ -72,10 +66,9 @@ argument_specs:
         default: "all"
 
   cleanup:
-    short_description: Clean up AAP Demo deployment
+    short_description: Clean up AAP Demo repository
     description:
-      - Stops AAP Demo services
-      - Removes deployment directory
+      - Removes AAP Demo repository directory
 
     options:
       aap_demo_workdir:

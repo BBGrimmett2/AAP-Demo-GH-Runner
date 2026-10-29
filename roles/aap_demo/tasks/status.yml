@@ -1,32 +1,33 @@
 ---
 # Public function: Check AAP Demo status
 
-- name: Check if AAP Demo is deployed
+- name: Check if AAP Demo repository exists
   ansible.builtin.stat:
-    path: "{{ aap_demo_workdir }}"
-  register: aap_demo_deployed
+    path: "{{ aap_demo_workdir }}/.git"
+  register: aap_demo_repo
 
-- name: Assert AAP Demo is deployed
+- name: Assert AAP Demo repository is cloned
   ansible.builtin.assert:
     that:
-      - aap_demo_deployed.stat.exists
-      - aap_demo_deployed.stat.isdir
-    fail_msg: "AAP Demo is not deployed at {{ aap_demo_workdir }}"
-    success_msg: "AAP Demo deployment directory exists"
+      - aap_demo_repo.stat.exists
+    fail_msg: "AAP Demo repository is not cloned at {{ aap_demo_workdir }}"
+    success_msg: "AAP Demo repository exists at {{ aap_demo_workdir }}"
 
-- name: Get AAP Demo status
+- name: Get repository information
   ansible.builtin.command:
-    cmd: "{{ aap_demo_cli }} status"
+    cmd: git rev-parse --short HEAD
     chdir: "{{ aap_demo_workdir }}"
-  register: aap_demo_status_result
+  register: aap_demo_git_commit
   changed_when: false
-  failed_when: aap_demo_status_result.rc not in [0, 1]
-  timeout: "{{ aap_demo_status_timeout }}"
+  failed_when: false
+  when: aap_demo_repo.stat.exists
 
-- name: Display AAP Demo status
+- name: Display AAP Demo repository status
   ansible.builtin.debug:
-    var: aap_demo_status_result.stdout_lines
+    msg:
+      - "Repository location: {{ aap_demo_workdir }}"
+      - "Current commit: {{ aap_demo_git_commit.stdout | default('unknown') }}"
 
 - name: Set status result fact
   ansible.builtin.set_fact:
-    aap_demo_status: "{{ 'running' if aap_demo_status_result.rc == 0 else 'stopped' }}"
+    aap_demo_status: "{{ 'cloned' if aap_demo_repo.stat.exists else 'not_cloned' }}"

@@ -1,30 +1,10 @@
 ---
-# Public function: Clean up AAP Demo deployment
+# Public function: Clean up AAP Demo repository
 
-- name: Check if AAP Demo is deployed
+- name: Check if AAP Demo repository exists
   ansible.builtin.stat:
     path: "{{ aap_demo_workdir }}"
   register: aap_demo_cleanup_check
-
-- name: Stop AAP Demo services
-  when: aap_demo_cleanup_check.stat.exists
-  block:
-    - name: Stop AAP Demo
-      ansible.builtin.command:
-        cmd: "{{ aap_demo_cli }} stop"
-        chdir: "{{ aap_demo_workdir }}"
-      register: aap_demo_stop_result
-      changed_when: aap_demo_stop_result.rc == 0
-      failed_when: false
-      ignore_errors: true
-
-    - name: Remove AAP Demo containers
-      ansible.builtin.command:
-        cmd: podman rm -f --all
-      register: podman_cleanup
-      changed_when: podman_cleanup.rc == 0
-      failed_when: false
-      ignore_errors: true
 
 - name: Remove AAP Demo directory
   ansible.builtin.file:
@@ -37,3 +17,8 @@
     path: "{{ aap_demo_workdir }}"
   register: aap_demo_cleanup_verify
   failed_when: aap_demo_cleanup_verify.stat.exists
+
+- name: Display cleanup result
+  ansible.builtin.debug:
+    msg: "AAP Demo repository removed from {{ aap_demo_workdir }}"
+  when: aap_demo_cleanup_check.stat.exists

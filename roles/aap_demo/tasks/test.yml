@@ -8,20 +8,20 @@
 - name: Run AAP Demo deploy test
   when: _test_type in ['deploy', 'all']
   block:
-    - name: Test AAP Demo deployment
+    - name: Test AAP Demo repository clone
       ansible.builtin.import_tasks: deploy.yml
 
-    - name: Wait for deployment to stabilize
-      ansible.builtin.pause:
-        seconds: "{{ aap_demo_health_check_delay }}"
+    - name: Verify repository was cloned
+      ansible.builtin.stat:
+        path: "{{ aap_demo_workdir }}/.git"
+      register: aap_demo_clone_verify
 
-    - name: Verify deployment succeeded
+    - name: Assert repository clone succeeded
       ansible.builtin.assert:
         that:
-          - aap_demo_deploy_result is defined
-          - aap_demo_deploy_result.rc == 0
-        fail_msg: "AAP Demo deployment test failed"
-        success_msg: "AAP Demo deployment test passed"
+          - aap_demo_clone_verify.stat.exists
+        fail_msg: "AAP Demo repository clone test failed"
+        success_msg: "AAP Demo repository clone test passed"
 
 - name: Run AAP Demo status test
   when: _test_type in ['status', 'all']
@@ -32,8 +32,8 @@
     - name: Verify status check succeeded
       ansible.builtin.assert:
         that:
-          - aap_demo_status_result is defined
-          - aap_demo_status_result.rc in [0, 1]
+          - aap_demo_status is defined
+          - aap_demo_status == 'cloned'
         fail_msg: "AAP Demo status test failed"
         success_msg: "AAP Demo status test passed"
 

@@ -1,0 +1,27 @@
+---
+- name: Perform initial configuration of Fedora lab servers
+  hosts: "{{ target_hosts | default('fedora_servers') }}"
+  strategy: free
+  gather_facts: false
+
+  pre_tasks:
+    - name: Set facts for ansible_host to work with IP addr
+      ansible.builtin.set_fact:
+        ansible_host: "{{ ip_addr }}"
+      when: ip_addr is defined
+      delegate_to: localhost
+
+    - name: Wait for connection
+      ansible.builtin.wait_for_connection:
+        timeout: 900
+
+    - name: Gather facts for remainder of playbook
+      ansible.builtin.setup:
+
+  tasks:
+    - name: Perform Fedora initial configuration
+      ansible.builtin.import_role:
+        name: fedora_initial_config
+      when:
+        - ansible_os_family == "RedHat"
+        - ansible_distribution == "Fedora"

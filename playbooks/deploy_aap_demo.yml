@@ -21,12 +21,11 @@
   post_tasks:
     - name: Display deployment status
       ansible.builtin.debug:
-        msg: "AAP Demo deployment completed on {{ inventory_hostname }}"
-      when: aap_demo_deploy_result is defined and aap_demo_deploy_result.rc == 0
+        msg: "AAP Demo repository cloned on {{ inventory_hostname }}"
 
     - name: Set deployment result for AAP
       ansible.builtin.set_stats:
         data:
-          aap_demo_deployed: true
+          aap_demo_cloned: true
           deployment_host: "{{ inventory_hostname }}"
           deployment_time: "{{ ansible_date_time.iso8601 }}"

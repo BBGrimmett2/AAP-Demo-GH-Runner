@@ -4,18 +4,7 @@ aap_demo_repo_url: "https://github.com/RedHatOfficial/aap-demo.git"
 aap_demo_branch: "main"
 aap_demo_workdir: "/tmp/aap-demo"
 
-# Deployment timeout settings
-aap_demo_deploy_timeout: 600
-aap_demo_status_timeout: 120
-
-# Health check settings
-aap_demo_health_check_retries: 10
-aap_demo_health_check_delay: 30
-
 # Test configuration
 aap_demo_test_types:
   - deploy
   - status
-
-# AAP Demo CLI command
-aap_demo_cli: "{{ aap_demo_workdir }}/aap-demo"
