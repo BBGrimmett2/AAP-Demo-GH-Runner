@@ -1,16 +1,16 @@
 ---
 # EDA Controller Rulebook Activations Configuration
 
-eda_rulebook_activations:
-  - name: Watch AAP Demo Upstream
-    description: "Monitor RedHatOfficial/aap-demo repository for push and PR events"
-    rulebook_name: github_webhook.yml
-    project: AAP Demo EDA
-    decision_environment: AAP Demo DE
-    enabled: true
-    awx_token: "{{ controller_api_token }}"
-    organization: CI/CD
-    restart_policy: on-failure
-    log_level: info
-    extra_vars:
-      WEBHOOK_SECRET: "{{ lookup('env', 'WEBHOOK_SECRET') | default('') }}"
+# eda_rulebook_activations:
+#   - name: Watch AAP Demo Upstream
+#     description: "Monitor RedHatOfficial/aap-demo repository for push and PR events"
+#     rulebook_name: github_webhook.yml
+#     project: AAP Demo EDA
+#     decision_environment: AAP Demo DE
+#     enabled: true
+#     awx_token: "{{ controller_api_token }}"
+#     organization: CI/CD
+#     restart_policy: on-failure
+#     log_level: info
+#     extra_vars:
+#       WEBHOOK_SECRET: "{{ lookup('env', 'WEBHOOK_SECRET') | default('') }}"

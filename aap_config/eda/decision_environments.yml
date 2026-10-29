@@ -1,16 +1,16 @@
 ---
 # EDA Controller Decision Environments Configuration
 
-eda_decision_environments:
-  - name: AAP Demo DE
-    description: "Decision environment for AAP Demo automation with ansible.eda collection"
-    image_url: "<YOUR_REGISTRY>/aap-demo-runner:latest"
-    credential: Red Hat Registry
-    organization: CI/CD
+# eda_decision_environments:
+#   - name: AAP Demo DE
+#     description: "Decision environment for AAP Demo automation with ansible.eda collection"
+#     image_url: "<YOUR_REGISTRY>/aap-demo-runner:latest"
+#     credential: Red Hat Registry
+#     organization: CI/CD
 
-  # Alternative: Use default AAP EDA decision environment if custom EE not built yet
-  # - name: Default AAP DE
-  #   description: "Default AAP decision environment"
-  #   image_url: "registry.redhat.io/ansible-automation-platform-26/de-supported-rhel9:latest"
-  #   credential: Red Hat Registry
-  #   organization: CI/CD
+#   # Alternative: Use default AAP EDA decision environment if custom EE not built yet
+#   # - name: Default AAP DE
+#   #   description: "Default AAP decision environment"
+#   #   image_url: "registry.redhat.io/ansible-automation-platform-26/de-supported-rhel9:latest"
+#   #   credential: Red Hat Registry
+#   #   organization: CI/CD
