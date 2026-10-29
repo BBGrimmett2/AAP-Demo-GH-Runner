@@ -19,6 +19,10 @@
 .vault-password
 *.vault-pass
 
+# Vault data files (encrypted secrets)
+vault.yml
+*vault.yml
+
 # Inventory caches (e.g. fact caching, dynamic inventory script caches)
 inventory.cache/
 *.inventory.cache
