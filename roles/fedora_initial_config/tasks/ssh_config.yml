@@ -1,0 +1,29 @@
+---
+# SSH configuration tasks
+
+- name: Ensure SSH is installed
+  ansible.builtin.dnf:
+    name: openssh-server
+    state: present
+
+- name: Configure SSH - PasswordAuthentication
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PasswordAuthentication'
+    line: "PasswordAuthentication {{ 'yes' if fedora_ssh_password_auth else 'no' }}"
+    state: present
+  notify: Restart sshd
+
+- name: Configure SSH - PermitRootLogin
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PermitRootLogin'
+    line: "PermitRootLogin {{ fedora_ssh_permit_root_login }}"
+    state: present
+  notify: Restart sshd
+
+- name: Ensure SSH is enabled and started
+  ansible.builtin.systemd:
+    name: sshd
+    state: started
+    enabled: true

@@ -1,0 +1,16 @@
+---
+# Main tasks file for fedora_initial_config
+
+- name: Validate role inputs
+  ansible.builtin.import_tasks: validate.yml
+
+- name: Perform system setup
+  ansible.builtin.import_tasks: system_setup.yml
+
+- name: Configure SSH
+  ansible.builtin.import_tasks: ssh_config.yml
+  when: fedora_configure_ssh | bool
+
+- name: Update system
+  ansible.builtin.import_tasks: updates.yml
+  when: fedora_update_system | bool

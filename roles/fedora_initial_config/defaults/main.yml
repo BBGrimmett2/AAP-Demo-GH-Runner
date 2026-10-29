@@ -1,0 +1,31 @@
+---
+# defaults file for fedora_initial_config
+
+# System timezone configuration
+fedora_timezone: "America/New_York"
+
+# Base packages to install
+fedora_base_packages:
+  - vim
+  - git
+  - wget
+  - curl
+  - net-tools
+  - bind-utils
+  - policycoreutils-python-utils
+
+# System tuning parameters
+fedora_disable_selinux: false
+fedora_configure_firewall: true
+
+# Network configuration
+fedora_set_hostname: true
+
+# System updates
+fedora_update_system: false
+fedora_reboot_if_required: false
+
+# SSH configuration
+fedora_configure_ssh: true
+fedora_ssh_password_auth: false
+fedora_ssh_permit_root_login: "no"

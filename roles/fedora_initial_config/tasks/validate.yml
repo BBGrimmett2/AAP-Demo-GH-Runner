@@ -1,0 +1,26 @@
+---
+# Validation tasks for fedora_initial_config role
+
+- name: Validate OS family
+  ansible.builtin.assert:
+    that:
+      - ansible_os_family == "RedHat"
+      - ansible_distribution == "Fedora"
+    fail_msg: "This role is designed for Fedora systems only"
+    success_msg: "OS validation passed: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+
+- name: Validate timezone value
+  ansible.builtin.assert:
+    that:
+      - fedora_timezone is defined
+      - fedora_timezone | length > 0
+    fail_msg: "fedora_timezone must be defined and not empty"
+    success_msg: "Timezone validation passed"
+
+- name: Validate SSH configuration options
+  ansible.builtin.assert:
+    that:
+      - fedora_ssh_permit_root_login in ['yes', 'no', 'prohibit-password']
+    fail_msg: "fedora_ssh_permit_root_login must be one of: yes, no, prohibit-password"
+    success_msg: "SSH configuration validation passed"
+  when: fedora_configure_ssh | bool

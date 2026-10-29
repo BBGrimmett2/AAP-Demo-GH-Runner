@@ -1,0 +1,31 @@
+---
+# System setup tasks
+
+- name: Set system timezone
+  community.general.timezone:
+    name: "{{ fedora_timezone }}"
+  notify: Restart chronyd
+
+- name: Set hostname from inventory
+  ansible.builtin.hostname:
+    name: "{{ inventory_hostname }}"
+  when: fedora_set_hostname | bool
+
+- name: Install base packages
+  ansible.builtin.dnf:
+    name: "{{ fedora_base_packages }}"
+    state: present
+  when: fedora_base_packages | length > 0
+
+- name: Ensure firewalld is installed and enabled
+  ansible.builtin.dnf:
+    name: firewalld
+    state: present
+  when: fedora_configure_firewall | bool
+
+- name: Start and enable firewalld
+  ansible.builtin.systemd:
+    name: firewalld
+    state: started
+    enabled: true
+  when: fedora_configure_firewall | bool

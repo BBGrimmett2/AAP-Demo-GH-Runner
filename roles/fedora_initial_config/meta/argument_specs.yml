@@ -1,0 +1,72 @@
+---
+argument_specs:
+  main:
+    short_description: Configure initial Fedora server setup
+    description:
+      - Performs initial configuration of Fedora servers including timezone, packages, SSH, and system settings
+    author:
+      - Brian Grimmett
+    options:
+      fedora_timezone:
+        type: str
+        required: false
+        default: "America/New_York"
+        description: System timezone to configure
+
+      fedora_base_packages:
+        type: list
+        required: false
+        elements: str
+        description: List of base packages to install
+
+      fedora_disable_selinux:
+        type: bool
+        required: false
+        default: false
+        description: Whether to disable SELinux (not recommended for production)
+
+      fedora_configure_firewall:
+        type: bool
+        required: false
+        default: true
+        description: Whether to configure firewalld
+
+      fedora_set_hostname:
+        type: bool
+        required: false
+        default: true
+        description: Whether to set hostname from inventory
+
+      fedora_update_system:
+        type: bool
+        required: false
+        default: false
+        description: Whether to perform system updates during initial config
+
+      fedora_reboot_if_required:
+        type: bool
+        required: false
+        default: false
+        description: Whether to reboot if required after updates
+
+      fedora_configure_ssh:
+        type: bool
+        required: false
+        default: true
+        description: Whether to configure SSH daemon
+
+      fedora_ssh_password_auth:
+        type: bool
+        required: false
+        default: false
+        description: Allow password authentication for SSH
+
+      fedora_ssh_permit_root_login:
+        type: str
+        required: false
+        default: "no"
+        choices:
+          - "yes"
+          - "no"
+          - "prohibit-password"
+        description: SSH root login setting
